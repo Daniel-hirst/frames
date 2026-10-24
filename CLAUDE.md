@@ -106,8 +106,8 @@ Toggle: All time / Last 10 sessions. Everything below recalculates for the chose
 
 All three are Chart.js, styled to match (no gridline clutter, two series colours, rounded bars):
 
-1. Rolling average best break, last 5 sessions, both players. Line chart.
-2. Cumulative frames won over sessions, both players. Line chart.
+1. Best break trend (rolling average best break, last 5 sessions), both players. Line chart.
+2. Running frames total (cumulative frames won over sessions), both players. Line chart.
 3. Best break per session, last 8 sessions, grouped bars.
 
 ### History

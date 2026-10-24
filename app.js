@@ -674,8 +674,8 @@
       legend(vals) + '<div class="chart-box"><canvas id="' + id + '" role="img" aria-label="' + title + '"></canvas></div></div>';
 
     $('#charts-body').html(
-      card('Rolling average best break', 'last 5 sessions', ids().map((id) => lastOf(rolling, id).toFixed(1)), 'chart-rolling') +
-      card('Cumulative frames won', 'all sessions', ids().map((id) => lastOf(cumulative, id)), 'chart-cumulative') +
+      card('Best break trend', 'average of last 5 sessions', ids().map((id) => lastOf(rolling, id).toFixed(1)), 'chart-rolling') +
+      card('Running frames total', 'all sessions', ids().map((id) => lastOf(cumulative, id)), 'chart-cumulative') +
       card('Best break per session', 'last 8 sessions', null, 'chart-best')
     );
 
