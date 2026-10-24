@@ -611,7 +611,7 @@
         row('Highest break', pa.highestBreak, pb.highestBreak) +
         row('30+ breaks', pa.breaks30, pb.breaks30) +
         row('20+ breaks', pa.breaks20, pb.breaks20) +
-        row('Avg best break per frame', pa.avgBreak.toFixed(1), pb.avgBreak.toFixed(1)) +
+        row('Average break', pa.avgBreak.toFixed(1), pb.avgBreak.toFixed(1)) +
       '</div>' +
       recordsCard(rec) +
       '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>'
@@ -674,7 +674,7 @@
       legend(vals) + '<div class="chart-box"><canvas id="' + id + '" role="img" aria-label="' + title + '"></canvas></div></div>';
 
     $('#charts-body').html(
-      card('Best break trend', 'average of last 5 sessions', ids().map((id) => lastOf(rolling, id).toFixed(1)), 'chart-rolling') +
+      card('Average break', 'last 5 sessions', ids().map((id) => lastOf(rolling, id).toFixed(1)), 'chart-rolling') +
       card('Running frames total', 'all sessions', ids().map((id) => lastOf(cumulative, id)), 'chart-cumulative') +
       card('Best break per session', 'last 8 sessions', null, 'chart-best')
     );
