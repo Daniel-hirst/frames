@@ -23,6 +23,11 @@
       <a href="#" class="icon-btn d-none" id="close-btn" aria-label="Close settings"><i class="bi bi-x-lg"></i></a>
     </header>
 
+    <div class="card-f load-error" id="load-error" hidden>
+      <span>Couldn’t load the results.</span>
+      <button type="button" class="btn-f btn-outline" id="retry-load">Retry</button>
+    </div>
+
     <section class="screen" id="screen-session" hidden>
       <div class="session-top">
         <label class="date-btn">
@@ -87,7 +92,6 @@
 
       <button type="button" class="btn-f btn-primary-f w-100" id="confirm" disabled>Confirm session (0 frames)</button>
       <button type="button" class="link-btn" id="discard">Discard draft</button>
-      <p class="test-note">Test mode: confirmed sessions are saved on this device only, until GitHub saving is set up.</p>
     </section>
 
     <section class="screen" id="screen-stats" hidden>
@@ -107,13 +111,43 @@
     </section>
 
     <section class="screen" id="screen-settings" hidden>
-      <div class="card-f empty">Settings screen comes in step 5.</div>
+      <div class="card-f">
+        <h2 class="card-title">Players</h2>
+        <label class="field-label" for="name-0">Player 1</label>
+        <input type="text" class="text-input p0" id="name-0" maxlength="20" autocomplete="off">
+        <label class="field-label mt-12" for="name-1">Player 2</label>
+        <input type="text" class="text-input p1" id="name-1" maxlength="20" autocomplete="off">
+      </div>
+
+      <div class="card-f">
+        <div class="card-head">
+          <h2 class="card-title">GitHub saving</h2>
+          <span class="gh-status" id="gh-status" data-state="none"><span class="dot"></span><span id="gh-status-text">Not connected</span></span>
+        </div>
+        <label class="field-label" for="repo">Repository</label>
+        <input type="text" class="text-input" id="repo" placeholder="owner/repo" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <label class="field-label mt-12" for="token">Access token (stays on this phone)</label>
+        <div class="token-row">
+          <input type="password" class="text-input" id="token" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button type="button" class="btn-f btn-outline" id="token-show" aria-pressed="false">Show</button>
+        </div>
+        <p class="help">Needs read and write access to this one repo only. Without a token the page is read-only.</p>
+      </div>
+
+      <div class="card-f">
+        <h2 class="card-title">Share and backup</h2>
+        <button type="button" class="row-btn" id="copy-link"><span>Copy read-only link for <span data-name="1"></span></span><i class="bi bi-copy" aria-hidden="true"></i></button>
+        <button type="button" class="row-btn mt-12" id="download">Download data.json backup<i class="bi bi-download" aria-hidden="true"></i></button>
+      </div>
+
+      <button type="button" class="btn-f btn-primary-f w-100" id="save-settings">Save settings</button>
     </section>
   </main>
 
-  <div class="toast-f" id="toast" role="status" aria-live="polite"></div>
+  <div class="toast-f" id="toast" role="status" aria-live="polite"><span id="toast-text"></span><button type="button" id="toast-action" hidden></button></div>
 
-  <div class="modal fade" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">
+  <!-- No "fade": tapping OK while a fade-in runs leaves Bootstrap's modal and backdrop stuck open. -->
+  <div class="modal" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <h2 class="card-title" id="confirm-title"></h2>
@@ -137,6 +171,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="stats.js"></script>
+  <script src="github.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

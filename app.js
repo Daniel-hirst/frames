@@ -2,14 +2,21 @@
 (function () {
   'use strict';
 
-  // Logger mode = a GitHub token is saved on this device.
-  // For testing, ?mode=readonly or ?mode=logger overrides it.
-  const modeParam = new URLSearchParams(location.search).get('mode');
-  const isLogger = modeParam ? modeParam === 'logger' : !!localStorage.getItem('frames.token');
-
   const DRAFT_KEY = 'frames.draft';
-  // Until github.js exists (build step 5), confirmed sessions are kept in this local copy.
-  const LOCAL_DATA_KEY = 'frames.localData';
+  const TOKEN_KEY = 'frames.token';
+  const REPO_KEY = 'frames.repo';
+
+  // Logger mode = a GitHub token is saved on this device. ?mode=readonly previews Damon's view.
+  const token = () => localStorage.getItem(TOKEN_KEY) || '';
+  const repo = () => localStorage.getItem(REPO_KEY) || guessRepo();
+  const isLogger = !!token() && new URLSearchParams(location.search).get('mode') !== 'readonly';
+
+  // On GitHub Pages the repo is in the URL: owner.github.io/repo/ -> owner/repo
+  function guessRepo() {
+    const owner = location.hostname.match(/^([^.]+)\.github\.io$/);
+    const name = location.pathname.split('/')[1];
+    return owner && name ? owner[1] + '/' + name : '';
+  }
   const MAX_BREAK = 147;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -59,11 +66,15 @@
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
 
+  // Error toasts stay longer and can carry an action button (Retry).
   let toastTimer;
-  function toast(msg, isError) {
+  function toast(msg, isError, action) {
     clearTimeout(toastTimer);
-    $('#toast').text(msg).toggleClass('error', !!isError).addClass('show');
-    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 5000 : 2500);
+    $('#toast-text').text(msg);
+    $('#toast-action').prop('hidden', !action).text(action ? action.label : '').off('click')
+      .on('click', () => { $('#toast').removeClass('show'); action.fn(); });
+    $('#toast').toggleClass('error', !!isError).addClass('show');
+    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 9000 : 2500);
   }
 
   // Bootstrap modal in place of window.confirm. Resolves true on OK.
@@ -103,21 +114,38 @@
 
   /* ---------- data ---------- */
 
+  // Logger: read through the API so a fresh save shows at once; fall back to the published data.json.
+  // Read-only: the published data.json (GitHub Pages can lag a minute or two). On failure keep what we had.
   async function loadData() {
-    const local = readJSON(LOCAL_DATA_KEY);
-    if (local) { data = local; return; }
+    if (isLogger) {
+      try {
+        data = (await GitHub.load(repo(), token())).data;
+        $('#load-error').prop('hidden', true);
+        return;
+      } catch (e) {
+        toast('Couldn’t read from GitHub: ' + e.message + ' Showing the published copy.', true);
+      }
+    }
     try {
       const res = await fetch('data.json', { cache: 'no-store' });
       if (!res.ok) throw new Error(res.status);
       data = await res.json();
+      $('#load-error').prop('hidden', true);
     } catch (e) {
-      toast('Could not load results. Reload the page to try again.', true);
+      $('#load-error').prop('hidden', false);
     }
   }
 
-  function saveData(next) {
-    data = next;
-    localStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data));
+  function refreshAll() {
+    $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });
+    renderSession();
+    renderData();
+  }
+
+  // "Session 2026-10-17: Dan 3-2 Damon", using the names in the data being committed.
+  function commitMessage(prefix, s, d) {
+    const [a, b] = d.players;
+    return prefix + ' ' + s.date + ': ' + a.name + ' ' + Stats.sessionScore(s, a.id) + '-' + Stats.sessionScore(s, b.id) + ' ' + b.name;
   }
 
   /* ---------- draft ---------- */
@@ -176,7 +204,8 @@
     updateFormState();
 
     const n = draft.frames.length;
-    $('#confirm').text((draft.editingId ? 'Save session (' : 'Confirm session (') + plural(n, 'frame') + ')').prop('disabled', !n);
+    $('#confirm').text(saving ? 'Saving to GitHub…' : (draft.editingId ? 'Save session (' : 'Confirm session (') + plural(n, 'frame') + ')').prop('disabled', !n || saving);
+    $('#screen-session').prop('inert', saving);
     $('#discard').text(draft.editingId ? 'Discard changes' : 'Discard draft').prop('hidden', !hasDraft());
     if (current === 'session') $('#title').text(SCREENS.session.title());
   }
@@ -309,22 +338,34 @@
     return nameOf(0) + ' ' + Stats.sessionScore(s, a) + '–' + Stats.sessionScore(s, b) + ' ' + nameOf(1);
   }
 
-  function confirmSession() {
-    if (!draft.frames.length) return;
+  // The draft is only cleared once GitHub has the commit. Any failure leaves it untouched.
+  let saving = false;
+  async function confirmSession() {
+    if (!draft.frames.length || saving) return;
     const editing = !!draft.editingId;
-    const result = Stats.upsertSession(data, { date: draft.date, frames: draft.frames }, draft.editingId);
+    const session = { date: draft.date, frames: draft.frames };
+    let saved;
+    saving = true;
+    renderSession();
     try {
-      saveData(result.data);
+      data = await GitHub.save(repo(), token(), (d) => {
+        const r = Stats.upsertSession(d, session, draft.editingId);
+        saved = r.session;
+        return { data: r.data, message: commitMessage(editing ? 'Edit session' : 'Session', r.session, r.data) };
+      });
     } catch (e) {
-      toast('Could not save. Your draft is kept.', true);
+      toast(e.message + ' Your draft is kept.', true, { label: 'Retry', fn: confirmSession });
       return;
+    } finally {
+      saving = false;
+      renderSession();
     }
-    toast((editing ? 'Session updated: ' : 'Session saved: ') + scoreLine(result.session));
+    toast((editing ? 'Session updated: ' : 'Session saved: ') + scoreLine(saved));
     draft = newDraft();
     saveDraft();
     renderSession();
     expanded.clear();
-    expanded.add(result.session.id);
+    expanded.add(saved.id);
     renderData();
     location.hash = '#history';
   }
@@ -391,7 +432,17 @@
       const s = data.sessions.find((x) => x.id === id);
       const ok = await confirmDialog('Delete this session?', shortDate(s.date) + ', ' + scoreLine(s) + '.', 'Delete');
       if (!ok) return;
-      saveData(Stats.removeSession(data, id));
+      const btn = $(this).prop('disabled', true).text('Deleting…');
+      try {
+        data = await GitHub.save(repo(), token(), (d) => {
+          const gone = d.sessions.find((x) => x.id === id);
+          return gone ? { data: Stats.removeSession(d, id), message: commitMessage('Delete session', gone, d) } : null;
+        });
+      } catch (e) {
+        btn.prop('disabled', false).text('Delete');
+        toast(e.message + ' Nothing was deleted.', true);
+        return;
+      }
       expanded.delete(id);
       if (draft.editingId === id) { draft = newDraft(); changed(); }
       renderData();
@@ -541,6 +592,104 @@
     }));
   }
 
+  /* ---------- settings ---------- */
+
+  function setStatus(state, text) {
+    $('#gh-status').attr('data-state', state);
+    $('#gh-status-text').text(text);
+  }
+
+  const STATUS_TEXT = { auth: 'Bad token', forbidden: 'No write access', notfound: 'Repo not found', offline: 'Offline', conflict: 'Conflict', other: 'GitHub error' };
+
+  async function checkConnection(r, t) {
+    if (!t) { setStatus('none', 'Not connected'); return false; }
+    setStatus('checking', 'Checking…');
+    try {
+      await GitHub.load(r, t);
+      setStatus('ok', 'Connected');
+      return true;
+    } catch (e) {
+      setStatus('error', STATUS_TEXT[e.kind] || 'Error');
+      return e;
+    }
+  }
+
+  function renderSettings() {
+    $('#name-0').val(nameOf(0));
+    $('#name-1').val(nameOf(1));
+    $('#repo').val(repo());
+    $('#token').val(token()).attr('type', 'password');
+    $('#token-show').text('Show').attr('aria-pressed', 'false');
+    checkConnection(repo(), token());
+  }
+
+  async function saveSettings() {
+    const newRepo = $('#repo').val().trim();
+    const newToken = $('#token').val().trim();
+    const names = [$('#name-0').val().trim(), $('#name-1').val().trim()];
+    const namesChanged = names.some((n, i) => n !== nameOf(i));
+    if (names.some((n) => !n)) { toast('Both players need a name.', true); return; }
+    if (newToken && !/^[\w.-]+\/[\w.-]+$/.test(newRepo)) { toast('Repository should look like owner/repo.', true); return; }
+    if (namesChanged && !newToken) { toast('Names are saved to GitHub, so they need the access token.', true); return; }
+
+    const btn = $('#save-settings').prop('disabled', true).text('Saving…');
+    const done = () => btn.prop('disabled', false).text('Save settings');
+    if (newToken) {
+      const result = await checkConnection(newRepo, newToken);
+      if (result !== true) { toast(result.message + ' Settings not saved.', true); done(); return; }
+    }
+    if (namesChanged) {
+      try {
+        data = await GitHub.save(newRepo, newToken, (d) => ({
+          data: Object.assign({}, d, { players: d.players.map((p, i) => Object.assign({}, p, { name: names[i] })) }),
+          message: 'Rename players: ' + names.join(' and ')
+        }));
+      } catch (e) {
+        toast(e.message + ' Names not saved.', true); done(); return;
+      }
+    }
+
+    newToken ? localStorage.setItem(TOKEN_KEY, newToken) : localStorage.removeItem(TOKEN_KEY);
+    newRepo && newRepo !== guessRepo() ? localStorage.setItem(REPO_KEY, newRepo) : localStorage.removeItem(REPO_KEY);
+    done();
+
+    // Adding or removing the token switches mode: reload into it (the draft is in localStorage).
+    if (!!newToken !== isLogger) {
+      history.replaceState(null, '', location.pathname + (newToken ? '#session' : '#stats'));
+      location.reload();
+      return;
+    }
+    refreshAll();
+    toast('Settings saved');
+  }
+
+  function bindSettings() {
+    $('#token-show').on('click', function () {
+      const show = $('#token').attr('type') === 'password';
+      $('#token').attr('type', show ? 'text' : 'password');
+      $(this).text(show ? 'Hide' : 'Show').attr('aria-pressed', String(show));
+    });
+    $('#save-settings').on('click', saveSettings);
+    $('#copy-link').on('click', async function () {
+      const url = location.origin + location.pathname;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast('Link copied: ' + url);
+      } catch (e) {
+        toast('Couldn’t copy. The link is ' + url, true);
+      }
+    });
+    $('#download').on('click', function () {
+      const blob = new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'data.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+    $('#retry-load').on('click', () => loadData().then(refreshAll));
+  }
+
   /* ---------- routing ---------- */
 
   function renderData() {
@@ -573,15 +722,18 @@
     $('#settings-btn').toggleClass('d-none', onSettings);
     $('#close-btn').toggleClass('d-none', !onSettings).attr('href', '#' + lastTab);
     if (name === 'charts') renderCharts();
+    if (name === 'settings') renderSettings();
     window.scrollTo(0, 0);
   }
 
   $(function () {
     $('body').toggleClass('readonly', !isLogger);
+    localStorage.removeItem('frames.localData');   // practice copy from before GitHub saving existed
     loadDraft();
     $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });
     bindSession();
     bindHistory();
+    bindSettings();
     $('.seg-btn').on('click', function () {
       statsRange = this.dataset.range;
       renderStats();
@@ -591,9 +743,8 @@
     $(window).on('hashchange', route);
     route();
     loadData().then(() => {
-      $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });
-      renderSession();
-      renderData();
+      refreshAll();
+      if (current === 'settings') renderSettings();
     });
   });
 })();

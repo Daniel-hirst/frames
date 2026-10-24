@@ -69,6 +69,8 @@ One file, `data.json`, in the repo root. Only **confirmed** sessions are in it.
 
 Dan needs a way into Settings on a new device even though the cog is hidden when there is no token, so `#settings` always works if typed in the URL.
 
+Adding `?mode=readonly` to the URL shows the read-only view on a device that has a token, so Dan can check what Damon sees. There is no URL switch into logger mode: that needs the token.
+
 ## Screens
 
 Mobile first, 390 px wide is the target. Bottom tab bar with four tabs: Session, Stats, Charts, History. Settings is the cog in the top right of every screen.

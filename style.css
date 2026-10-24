@@ -10,6 +10,7 @@
   --dan: #F2C94C;
   --damon: #8EC5FF;
   --red: #E0533D;
+  --ok: #5BD08A;
   --tabbar-h: 76px;
 }
 
@@ -115,7 +116,6 @@ html, body {
   color: var(--muted);
   font-size: 15px;
 }
-.test-note { color: var(--muted); font-size: 12px; text-align: center; margin: 4px 0 0; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
 /* Session */
@@ -270,12 +270,53 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .hist-frames .frame-row { cursor: default; }
 .hist-actions { padding: 12px 16px 16px; margin: 0; }
 
+/* Settings */
+.text-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 17px;
+}
+.text-input:focus { outline: none; border-color: var(--text); }
+.text-input.p0 { color: var(--dan); font-weight: 600; }
+.text-input.p1 { color: var(--damon); font-weight: 600; }
+.token-row { display: flex; gap: 10px; }
+.token-row .btn-f { flex: none; min-width: 72px; }
+.help { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.gh-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
+.gh-status .dot { background: var(--line); }
+.gh-status[data-state="ok"] .dot { background: var(--ok); }
+.gh-status[data-state="checking"] .dot { background: var(--muted); }
+.gh-status[data-state="error"] .dot { background: var(--red); }
+.gh-status[data-state="error"] { color: var(--text); }
+.row-btn {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 16px;
+  text-align: left;
+}
+.row-btn .bi { font-size: 18px; }
+#screen-settings > .btn-f { margin-top: 4px; }
+.load-error { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
 /* Toast and dialog */
 .toast-f {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
-  transform: translate(-50%, 20px);
+  /* At the top, so it never covers Confirm or Save at the bottom of a screen */
+  top: calc(12px + env(safe-area-inset-top));
+  transform: translate(-50%, -20px);
   width: max-content;
   max-width: calc(100% - 40px);
   padding: 12px 18px;
@@ -288,7 +329,11 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   transition: opacity .2s, transform .2s;
   z-index: 2000;
 }
+/* Taps pass through the toast to whatever is under it; only the action button catches them. */
 .toast-f.show { opacity: 1; transform: translate(-50%, 0); }
+.toast-f.show #toast-action { pointer-events: auto; }
+.toast-f { display: flex; align-items: center; gap: 12px; }
+#toast-action { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid currentColor; background: none; color: inherit; font-weight: 600; flex: none; }
 .toast-f.error { background: var(--red); color: var(--text); }
 .modal-content { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
 .modal-content p { color: var(--muted); }
