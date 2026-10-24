@@ -694,19 +694,11 @@
 
   /* ---------- home-screen app ---------- */
 
-  // An iOS home-screen app with a translucent status bar draws the page from the top of the screen but can size it
-  // a status bar's height short, so a bottom:0 tab bar stops above the edge. Measure the shortfall and push the bar
-  // down by it. In Safari, or when the page isn't drawn under the status bar, the gap is 0.
-  let screenInfo = '';
-  function fitStandalone() {
-    const probe = $('<div style="position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden"></div>').appendTo('body');
-    const insetTop = probe[0].offsetHeight;
-    probe.remove();
-    const gap = navigator.standalone && insetTop > 0 ? Math.max(0, screen.height - window.innerHeight) : 0;
-    document.documentElement.style.setProperty('--ios-gap', gap + 'px');
-    screenInfo = 'Screen ' + screen.height + ' · page ' + window.innerHeight + ' · top ' + insetTop + ' · gap ' + gap +
-      (navigator.standalone ? ' · home screen' : '');
-    $('#screen-info').text(screenInfo);
+  // Temporary: measurements shown at the bottom of Settings while the home-screen tab bar fix is confirmed.
+  function showScreenInfo() {
+    const bar = document.querySelector('.tabbar').getBoundingClientRect();
+    $('#screen-info').text('Screen ' + screen.height + ' · page ' + window.innerHeight + ' · bar bottom ' + Math.round(bar.bottom) +
+      (navigator.standalone ? ' · home screen' : ''));
   }
 
   /* ---------- routing ---------- */
@@ -741,13 +733,12 @@
     $('#settings-btn').toggleClass('d-none', onSettings);
     $('#close-btn').toggleClass('d-none', !onSettings).attr('href', '#' + lastTab);
     if (name === 'charts') renderCharts();
-    if (name === 'settings') renderSettings();
+    if (name === 'settings') { renderSettings(); showScreenInfo(); }
     window.scrollTo(0, 0);
   }
 
   $(function () {
     $('body').toggleClass('readonly', !isLogger);
-    fitStandalone();
     localStorage.removeItem('frames.localData');   // practice copy from before GitHub saving existed
     loadDraft();
     $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });

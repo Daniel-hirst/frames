@@ -25,6 +25,12 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS home-screen app: on a page shorter than the screen, the fixed tab bar stops a status bar's height above the
+   bottom edge (pages taller than the screen are fine). So every page is made a little taller than the screen. */
+@media (display-mode: standalone) {
+  #app { min-height: calc(100vh + env(safe-area-inset-top) + 1px); }
+}
+
 #app {
   max-width: 480px;
   margin: 0 auto;
@@ -342,8 +348,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 /* Tab bar */
 .tabbar {
   position: fixed;
-  left: 0; right: 0;
-  bottom: calc(-1 * var(--ios-gap, 0px));   /* see fitStandalone in app.js */
+  left: 0; right: 0; bottom: 0;
   display: flex;
   justify-content: center;
   gap: 4px;
