@@ -123,21 +123,14 @@
   const at = (x) => ({ sessionId: x.session.id, date: x.session.date });
 
   // Frame points. Frames logged before scores were recorded have no `score` and are left out.
-  // closest: the frame with the smallest winning margin (earliest on a tie).
   function points(sessions, playerIds, opts) {
     const scored = framesWithSession(rangeOf(sessions, opts)).filter((x) => x.f.score);
-    const [a, b] = playerIds;
     const players = {};
     for (const id of playerIds) {
       const total = scored.reduce((t, x) => t + x.f.score[id], 0);
       players[id] = { total, avgPerFrame: scored.length ? round1(total / scored.length) : 0 };
     }
-    let closest = null;
-    for (const x of scored) {
-      const margin = Math.abs(x.f.score[a] - x.f.score[b]);
-      if (!closest || margin < closest.margin) closest = Object.assign(at(x), { frame: x.n, score: x.f.score, winner: x.f.winner, margin });
-    }
-    return { frames: scored.length, players, closest };
+    return { frames: scored.length, players };
   }
 
   // Each player's records, with where they were set. A record stands until beaten, so ties keep the earlier one.

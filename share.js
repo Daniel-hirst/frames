@@ -45,7 +45,7 @@
     ctx.fillText(s, x, y);
   }
 
-  // night: { date, names:[a,b], colours:[a,b], score:[a,b], best:[a,b],
+  // night: { date, names:[a,b], colours:[a,b], score:[a,b], best:[a,b], points:[a,b]|null,
   //          frames:[{ winner: 0|1, score:[a,b]|null, breaks:[a,b] }] }
   // Resolves to a PNG blob, 1080 wide, at least 1350 tall (4:5), taller for long nights.
   async function render(night) {
@@ -95,7 +95,8 @@
     }
     text(ctx, '–', W / 2, cardY + 290, '700 120px ' + COND, C.muted, 'center');
     const [sa, sb] = night.score;
-    const result = sa === sb ? 'Level' : night.names[sa > sb ? 0 : 1] + ' wins the night';
+    const result = (sa === sb ? 'Level' : night.names[sa > sb ? 0 : 1] + ' wins the night') +
+      (night.points ? '  ·  Points ' + night.points[0] + '–' + night.points[1] : '');
     text(ctx, result, W / 2, cardY + cardH - 40, '500 32px ' + BODY, C.muted, 'center');
 
     // Frames.

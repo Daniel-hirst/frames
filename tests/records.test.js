@@ -21,11 +21,6 @@ test('points: totals and average per frame, unscored frames left out', () => {
   assert.deepEqual(p.players.damon, { total: 407, avgPerFrame: 45.2 });
 });
 
-test('points: closest frame is the smallest margin', () => {
-  assert.deepEqual(Stats.points(S, ids).closest,
-    { sessionId: '2026-10-10', date: '2026-10-10', frame: 4, score: { dan: 60, damon: 58 }, winner: 'dan', margin: 2 });
-});
-
 test('records: Dan', () => {
   const r = Stats.records(S, ids).dan;
   assert.deepEqual(r.highestBreak, { sessionId: '2026-10-17', date: '2026-10-17', value: 50 });   // unscored frame still counts
@@ -75,12 +70,12 @@ test('last N: records and points use the range only; nothing set means null', ()
   assert.deepEqual([r.dan.bestNight.won, r.dan.bestNight.lost], [1, 0]);
   assert.equal(r.dan.longestStreak.value, 1);
   assert.deepEqual(r.damon, { highestBreak: null, highestScore: null, biggestWin: null, bestNight: null, longestStreak: null });
-  assert.deepEqual(Stats.points(S, ids, { last: 1 }), { frames: 0, players: { dan: { total: 0, avgPerFrame: 0 }, damon: { total: 0, avgPerFrame: 0 } }, closest: null });
+  assert.deepEqual(Stats.points(S, ids, { last: 1 }), { frames: 0, players: { dan: { total: 0, avgPerFrame: 0 }, damon: { total: 0, avgPerFrame: 0 } } });
 });
 
 test('no sessions: no records, no points', () => {
   assert.deepEqual(Stats.records([], ids).dan, { highestBreak: null, highestScore: null, biggestWin: null, bestNight: null, longestStreak: null });
-  assert.equal(Stats.points([], ids).closest, null);
+  assert.equal(Stats.points([], ids).frames, 0);
 });
 
 const data = { players: [{ id: 'dan', name: 'Dan' }, { id: 'damon', name: 'Damon' }], sessions: S };

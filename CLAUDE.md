@@ -101,7 +101,6 @@ Toggle: All time / Last 10 sessions. Everything below recalculates for the chose
 - Average frames per session.
 - Totals card under head to head: frames won, points and points per frame each, then total frames played and total points scored (both players together).
 - Records: per player, highest break, highest frame score, biggest frame win, best night, longest win streak, each with the date it was set. Tapping one opens that night in History.
-- Closest frame (smallest winning margin), tappable. Hidden until there are two scored frames.
 
 ### Charts
 
@@ -113,9 +112,9 @@ All three are Chart.js, styled to match (no gridline clutter, two series colours
 
 ### History
 
-Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames. Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit). The "Session deleted" toast offers **Undo**, which commits `Restore session ...` (same id unless it was reused meanwhile).
+Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames, then the night's points (both players, only when the frames have scores). Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit). The "Session deleted" toast offers **Undo**, which commits `Restore session ...` (same id unless it was reused meanwhile).
 
-**Share this night** (both modes): draws a 1080-wide PNG of the night in the app's style (`share.js`) and opens the share sheet, or downloads it where there is no share sheet. The picture is drawn when the row is expanded, because iOS refuses `navigator.share` if too long passes after the tap.
+**Share this night** (both modes): draws a 1080-wide PNG of the night in the app's style (`share.js`), with the night's points under the score, and opens the share sheet, or downloads it where there is no share sheet. The picture is drawn when the row is expanded, because iOS refuses `navigator.share` if too long passes after the tap.
 
 ### Settings
 
@@ -140,7 +139,6 @@ Treat all frames in order: sort sessions by date, then frames in played order.
 - **Rolling average best break** (chart 1): for each session, a player's mean best break per frame in that session; the rolling value is the mean of those over the last 5 sessions up to and including this one (fewer at the start).
 - **Cumulative frames won** (chart 2): running total per player after each session.
 - **Points**: per player, sum of `score[player]` over frames that have a `score` (older frames without one are skipped); points per frame = total / scored frames, one decimal place.
-- **Closest frame**: smallest winning margin among scored frames; earliest on a tie.
 - **Records**: highest break, highest frame score, biggest frame win (winning margin), best night (session won by the biggest frame margin, then most frames won), longest win streak (with the sessions it started and ended in). Each carries its session and date. A record equalled later stays with the first time it was set. `null` when there is none (no break, no frame won).
 - **Last 10 sessions** filter: take the 10 most recent sessions and run every rule above on them only. Streaks inside the filtered range only.
 

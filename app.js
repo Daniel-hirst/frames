@@ -416,6 +416,7 @@
         '</button>' +
         (open
           ? '<div class="hist-frames">' + s.frames.map((f, i) => frameRow(f, i + 1, 'div')).join('') +
+            nightPoints(s) +
             '<div class="hist-share"><button type="button" class="btn-f btn-raised" data-action="share">' +
               '<i class="bi bi-box-arrow-up" aria-hidden="true"></i> Share this night</button></div>' +
             '<div class="two-col hist-actions logger-only">' +
@@ -427,6 +428,16 @@
     }
     $('#history-body').html(html);
     for (const s of data.sessions) if (expanded.has(s.id)) shareImage(s).catch(() => {});
+  }
+
+  // Points for the night, both players. Nothing for nights logged before frame scores existed.
+  function nightPoints(s) {
+    const p = Stats.points([s], ids());
+    if (!p.frames) return '';
+    const [x, y] = ids().map((id) => p.players[id].total);
+    return '<div class="hist-points"><span class="hist-points-label">Points</span>' +
+      '<span class="big-num" aria-label="' + esc(nameOf(0) + ' ' + x + ' points, ' + nameOf(1) + ' ' + y + ' points') + '">' +
+      '<span class="p0">' + x + '</span> – <span class="p1">' + y + '</span></span></div>';
   }
 
   function bindHistory() {
@@ -514,6 +525,7 @@
         colours: [css.getPropertyValue('--dan').trim(), css.getPropertyValue('--damon').trim()],
         score: [Stats.sessionScore(s, a), Stats.sessionScore(s, b)],
         best: [Stats.sessionBestBreak(s, a), Stats.sessionBestBreak(s, b)],
+        points: (() => { const p = Stats.points([s], ids()); return p.frames ? [p.players[a].total, p.players[b].total] : null; })(),
         frames: s.frames.map((f) => ({
           winner: indexOf(f.winner),
           score: f.score ? [f.score[a], f.score[b]] : null,
@@ -602,12 +614,7 @@
         row('Avg best break per frame', pa.avgBreak.toFixed(1), pb.avgBreak.toFixed(1)) +
       '</div>' +
       recordsCard(rec) +
-      '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>' +
-      (pts.closest && pts.frames > 1   // with one frame, "closest" is just that frame
-        ? '<button type="button" class="stat-line stat-link" data-session="' + esc(pts.closest.sessionId) + '">' +
-            '<span>Closest frame<span class="stat-date">' + shortDate(pts.closest.date) + ', frame ' + pts.closest.frame + '</span></span>' +
-            '<span class="big-num">' + pts.closest.score[ids()[0]] + '–' + pts.closest.score[ids()[1]] + '</span></button>'
-        : '')
+      '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>'
     );
   }
 

@@ -250,8 +250,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .stats-table .tr-total { grid-template-columns: 1fr auto; }
 .stat-line { display: flex; justify-content: space-between; align-items: center; padding: 4px 4px; color: var(--muted); }
 .stat-line .big-num { color: var(--text); font-size: 26px; }
-.stat-link { width: 100%; min-height: 44px; border: 0; background: none; text-align: left; margin-top: 4px; }
-.stat-date, .rec-date { display: block; font-size: 12px; color: var(--muted); }
+.rec-date { display: block; font-size: 12px; color: var(--muted); }
 .records .tr { grid-template-columns: 1fr 84px 84px; padding: 6px 16px; }
 .records .tr:first-child { padding: 12px 16px; }
 .records .td-label { line-height: 1.25; }
@@ -284,6 +283,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .hist-row .bi { color: var(--muted); }
 .hist-frames { background: var(--card-inset); border-top: 1px solid var(--line); }
 .hist-frames .frame-row { cursor: default; }
+.hist-points { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); }
+.hist-points-label { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.hist-points .big-num { font-size: 26px; }
 .hist-share { padding: 12px 16px 0; }
 .hist-share .btn-f { width: 100%; }
 body.readonly .hist-share { padding-bottom: 16px; }
