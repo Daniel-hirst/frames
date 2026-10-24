@@ -12,6 +12,29 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- iOS launch screens, rendered from the splash design (design/6-splash.png) at each iPhone size -->
+  <!-- iPhone 16 Pro Max, 17 Pro Max -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1320x2868.png">
+  <!-- iPhone 14 Pro Max, 15 Plus/Pro Max, 16 Plus -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1290x2796.png">
+  <!-- iPhone 12/13 Pro Max, 14 Plus -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1284x2778.png">
+  <!-- iPhone Air -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1260x2736.png">
+  <!-- iPhone XS Max, 11 Pro Max -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1242x2688.png">
+  <!-- iPhone XR, 11 -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-828x1792.png">
+  <!-- iPhone 16 Pro, 17, 17 Pro -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1206x2622.png">
+  <!-- iPhone 14 Pro, 15, 15 Pro, 16 -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1179x2556.png">
+  <!-- iPhone 12, 13, 14, 16e -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1170x2532.png">
+  <!-- iPhone X, XS, 11 Pro, 12/13 mini -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1125x2436.png">
+  <!-- iPhone SE (2nd/3rd), 8 -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-750x1334.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -20,6 +43,104 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body>
+  <!-- Animated intro, lifted from design/intro-reference.html: plays once per launch over the app, then removes itself.
+       One SVG on the reference's 390 x 900 stage, so it scales to any screen and stays centred. -->
+  <div id="intro" aria-hidden="true">
+    <svg viewBox="0 0 390 900" preserveAspectRatio="xMidYMid meet">
+      <g class="intro-scene">
+        <rect x="8" y="50" width="374" height="800" rx="22" fill="#0A261D" stroke="#2A6A50" stroke-width="2"></rect>
+        <rect x="30" y="72" width="330" height="756" rx="4" fill="#123D2D" stroke="#1C5740" stroke-width="8"></rect>
+        <line x1="30" y1="560" x2="360" y2="560" stroke="#1C5740" stroke-width="2"></line>
+        <path d="M135 560 A60 60 0 0 0 255 560" fill="none" stroke="#1C5740" stroke-width="2"></path>
+        <circle cx="28" cy="70" r="16" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="362" cy="70" r="16" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="28" cy="830" r="16" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="362" cy="830" r="16" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="28" cy="451" r="14" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="362" cy="451" r="14" fill="#04130E" stroke="#2A6A50" stroke-width="2"></circle>
+        <circle cx="195" cy="139" r="9" fill="#0B0B0B" stroke="#3A3A3A" stroke-width="1"></circle>
+        <circle cx="192" cy="136" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <circle cx="195" cy="262" r="9" fill="#F28BA8"></circle>
+        <circle cx="192" cy="259" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <circle cx="195" cy="451" r="9" fill="#3F7FD6"></circle>
+        <circle cx="192" cy="448" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <circle cx="135" cy="560" r="9" fill="#2FA866"></circle>
+        <circle cx="132" cy="557" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <circle cx="195" cy="560" r="9" fill="#8B5A2B"></circle>
+        <circle cx="192" cy="557" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <circle cx="255" cy="560" r="9" fill="#F2C94C"></circle>
+        <circle cx="252" cy="557" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        <g class="ball rest" style="--dx: -80px; --dy: -40px">
+        <circle cx="195" cy="280" r="9" fill="#E0533D"></circle>
+        <circle cx="192" cy="277" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <g class="ball far" style="--dx: -158px; --dy: -226px">
+        <circle cx="186" cy="295.6" r="9" fill="#E0533D"></circle>
+        <circle cx="183" cy="292.6" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <g class="ball rest" style="--dx: 96px; --dy: -96px">
+        <circle cx="204" cy="295.6" r="9" fill="#E0533D"></circle>
+        <circle cx="201" cy="292.6" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <g class="ball rest" style="--dx: -97px; --dy: 209px">
+        <circle cx="177" cy="311.2" r="9" fill="#E0533D"></circle>
+        <circle cx="174" cy="308.2" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <g class="ball rest" style="--dx: -65px; --dy: -121px">
+        <circle cx="195" cy="311.2" r="9" fill="#E0533D"></circle>
+        <circle cx="192" cy="308.2" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <g class="ball near" style="--dx: 149px; --dy: 140px">
+        <circle cx="213" cy="311.2" r="9" fill="#E0533D"></circle>
+        <circle cx="210" cy="308.2" r="2.4" fill="#FFFFFF" fill-opacity="0.4"></circle>
+        </g>
+        <circle class="ring" cx="182" cy="322" r="14" fill="none" stroke="#F4F1E8" stroke-width="2"></circle>
+        <g class="stick">
+        <g transform="rotate(3.2 165 612)">
+        <polygon points="163.5,614 166.5,614 169.5,800 160.5,800" fill="#D8B97E"></polygon>
+        <rect x="163.4" y="610" width="3.2" height="5" rx="1" fill="#6EA8E8"></rect>
+        </g>
+        </g>
+        <g class="cue">
+        <circle cx="165" cy="600" r="9" fill="#F4F1E8"></circle>
+        <circle cx="162" cy="597" r="2.4" fill="#FFFFFF"></circle>
+        </g>
+      </g>
+      <g class="intro-splash">
+        <svg x="107" y="306" width="176" height="176" viewBox="0 0 160 160">
+          <rect x="2" y="2" width="156" height="156" rx="38" fill="#154634" stroke="#2A6A50" stroke-width="2"></rect>
+          <circle cx="80" cy="38" r="13" fill="#E0533D"></circle>
+          <circle cx="66" cy="62" r="13" fill="#E0533D"></circle>
+          <circle cx="94" cy="62" r="13" fill="#E0533D"></circle>
+          <circle cx="52" cy="86" r="13" fill="#E0533D"></circle>
+          <circle cx="80" cy="86" r="13" fill="#E0533D"></circle>
+          <circle cx="108" cy="86" r="13" fill="#E0533D"></circle>
+          <circle cx="76" cy="34" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="62" cy="58" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="90" cy="58" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="48" cy="82" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="76" cy="82" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="104" cy="82" r="3.5" fill="#FFFFFF" fill-opacity="0.4"></circle>
+          <circle cx="80" cy="128" r="13" fill="#F4F1E8"></circle>
+          <circle cx="76" cy="124" r="3.5" fill="#FFFFFF"></circle>
+        </svg>
+        <text class="intro-wordmark" x="199.2" y="557" text-anchor="middle">FRAMES</text>
+        <text class="intro-tagline" x="195" y="590" text-anchor="middle">Head to head, frame by frame</text>
+      </g>
+    </svg>
+  </div>
+  <script>
+    // Reduced motion: no intro. Otherwise remove it when it finishes, on a tap, or after 4 s as a fallback.
+    (function () {
+      var intro = document.getElementById('intro');
+      function done() { if (intro.parentNode) intro.parentNode.removeChild(intro); }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return done();
+      intro.addEventListener('animationend', function (e) { if (e.target === intro) done(); });
+      intro.addEventListener('click', done);
+      setTimeout(done, 4000);
+    })();
+  </script>
+
   <main id="app">
     <header class="screen-head">
       <div>
