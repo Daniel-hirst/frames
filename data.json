@@ -9,34 +9,5 @@
       "name": "Damon"
     }
   ],
-  "sessions": [
-    {
-      "date": "2026-10-24",
-      "frames": [
-        {
-          "winner": "dan",
-          "score": {
-            "dan": 20,
-            "damon": 2
-          },
-          "breaks": {
-            "dan": 3,
-            "damon": 0
-          }
-        },
-        {
-          "winner": "dan",
-          "score": {
-            "dan": 20,
-            "damon": 5
-          },
-          "breaks": {
-            "dan": 4,
-            "damon": 2
-          }
-        }
-      ],
-      "id": "2026-10-24"
-    }
-  ]
+  "sessions": []
 }
