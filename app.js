@@ -89,10 +89,15 @@
   function frameRow(f, n, tag) {
     const w = indexOf(f.winner);
     const [a, b] = ids();
+    const breaks = (f.breaks[a] || 0) + ' · ' + (f.breaks[b] || 0);
+    // Frames logged before scores were recorded have no `score`; show their breaks instead.
+    const right = f.score
+      ? '<span class="frame-score">' + f.score[a] + ' – ' + f.score[b] + '</span><span class="frame-sub">breaks ' + breaks + '</span>'
+      : '<span class="frame-sub">breaks ' + breaks + '</span>';
     return '<' + tag + ' class="frame-row" data-index="' + (n - 1) + '"' + (tag === 'button' ? ' type="button"' : '') + '>' +
       '<span class="frame-no">F' + n + '</span>' +
       '<span class="frame-who"><span class="dot p' + w + '"></span>' + esc(nameOf(w)) + ' won</span>' +
-      '<span class="frame-breaks">' + (f.breaks[a] || 0) + ' · ' + (f.breaks[b] || 0) + '</span>' +
+      '<span class="frame-right">' + right + '</span>' +
       '</' + tag + '>';
   }
 
@@ -121,13 +126,14 @@
     return { editingId: null, date: today(), frames: [], form: blankForm() };
   }
   function blankForm() {
-    return { winner: null, breaks: [0, 0], editIndex: null };
+    return { scores: ['', ''], breaks: [0, 0], editIndex: null };
   }
   const hasDraft = () => draft.frames.length > 0 || !!draft.editingId;
 
   function loadDraft() {
     const d = readJSON(DRAFT_KEY);
     draft = d && (d.frames.length || d.editingId) ? d : newDraft();
+    if (!draft.form.scores) draft.form = blankForm();   // draft saved before frame scores existed
   }
 
   function saveDraft() {
@@ -159,19 +165,42 @@
     if (editing) $('#frame-list .frame-row').eq(form.editIndex).addClass('selected');
 
     $('#form-title').text(editing ? 'Edit frame ' + (form.editIndex + 1) : 'Add frame ' + (draft.frames.length + 1));
-    $('.winner-btn').each(function () {
-      $(this).attr('aria-pressed', String(form.winner === Number(this.dataset.winner)));
+    $('.score-input').each(function () {
+      if (document.activeElement !== this) this.value = form.scores[this.dataset.p];
     });
     $('.break-input').each(function () {
       if (document.activeElement !== this) this.value = form.breaks[this.dataset.p];
     });
-    $('#add-frame').text(editing ? 'Save frame' : 'Add frame').prop('disabled', form.winner === null);
+    $('#add-frame').text(editing ? 'Save frame' : 'Add frame');
     $('#edit-actions').prop('hidden', !editing);
+    updateFormState();
 
     const n = draft.frames.length;
     $('#confirm').text((draft.editingId ? 'Save session (' : 'Confirm session (') + plural(n, 'frame') + ')').prop('disabled', !n);
     $('#discard').text(draft.editingId ? 'Discard changes' : 'Discard draft').prop('hidden', !hasDraft());
     if (current === 'session') $('#title').text(SCREENS.session.title());
+  }
+
+  // Can the frame in the form be added? Both scores entered, not level, and no break above its player's score.
+  function formState() {
+    const { scores, breaks } = draft.form;
+    if (scores[0] === '' || scores[1] === '') return { ok: false, hint: '' };
+    const [a, b] = ids();
+    const winner = Stats.winnerFromScore({ [a]: scores[0], [b]: scores[1] }, ids());
+    if (!winner) return { ok: false, hint: 'Scores can’t be level.' };
+    for (const i of [0, 1]) {
+      if (breaks[i] > scores[i]) return { ok: false, winner, hint: nameOf(i) + '’s best break is higher than ' + nameOf(i) + '’s score.' };
+    }
+    return { ok: true, winner, hint: nameOf(indexOf(winner)) + ' wins this frame.' };
+  }
+
+  function updateFormState() {
+    const state = formState();
+    $('#add-frame').prop('disabled', !state.ok);
+    $('#form-hint').text(state.hint);
+    $('.score-input').each(function () {
+      $(this).toggleClass('leading', !!state.winner && ids()[this.dataset.p] === state.winner);
+    });
   }
 
   function clampBreak(v) {
@@ -186,10 +215,17 @@
       changed();
     });
 
-    $('.winner-btn').on('click', function () {
-      draft.form.winner = Number(this.dataset.winner);
-      changed();
-    });
+    $('.score-input')
+      .on('focus', function () { this.select(); })
+      .on('input', function () {
+        const digits = this.value.replace(/\D/g, '');
+        if (digits !== this.value) this.value = digits;
+        draft.form.scores[this.dataset.p] = digits === '' ? '' : Number(digits);
+        saveDraft();
+        updateFormState();
+      })
+      .on('blur', function () { this.value = draft.form.scores[this.dataset.p]; })
+      .on('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
 
     $('.step-btn').on('click', function () {
       const p = this.dataset.p;
@@ -205,15 +241,21 @@
         if (Number(digits) > MAX_BREAK) this.value = MAX_BREAK;
         draft.form.breaks[this.dataset.p] = clampBreak(this.value);
         saveDraft();
+        updateFormState();
       })
       .on('blur', function () { this.value = draft.form.breaks[this.dataset.p]; })
       .on('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
 
     $('#add-frame').on('click', function () {
       const form = draft.form;
-      if (form.winner === null) return;
+      const state = formState();
+      if (!state.ok) return;
       const [a, b] = ids();
-      const frame = { winner: ids()[form.winner], breaks: { [a]: form.breaks[0], [b]: form.breaks[1] } };
+      const frame = {
+        winner: state.winner,
+        score: { [a]: form.scores[0], [b]: form.scores[1] },
+        breaks: { [a]: form.breaks[0], [b]: form.breaks[1] }
+      };
       let index;
       if (form.editIndex !== null) {
         index = form.editIndex;
@@ -231,7 +273,8 @@
       const i = Number(this.dataset.index);
       const f = draft.frames[i];
       const [a, b] = ids();
-      draft.form = { winner: indexOf(f.winner), breaks: [f.breaks[a] || 0, f.breaks[b] || 0], editIndex: i };
+      const scores = f.score ? [f.score[a], f.score[b]] : ['', ''];
+      draft.form = { scores, breaks: [f.breaks[a] || 0, f.breaks[b] || 0], editIndex: i };
       changed();
       document.getElementById('frame-form').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
     });

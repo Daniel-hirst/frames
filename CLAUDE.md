@@ -45,16 +45,18 @@ One file, `data.json`, in the repo root. Only **confirmed** sessions are in it.
       "id": "2026-10-17",
       "date": "2026-10-17",
       "frames": [
-        { "winner": "dan",   "breaks": { "dan": 34, "damon": 12 } },
-        { "winner": "damon", "breaks": { "dan": 0,  "damon": 29 } }
+        { "winner": "dan",   "score": { "dan": 72, "damon": 35 }, "breaks": { "dan": 34, "damon": 12 } },
+        { "winner": "damon", "score": { "dan": 18, "damon": 64 }, "breaks": { "dan": 0,  "damon": 29 } }
       ]
     }
   ]
 }
 ```
 
-- `breaks` is each player's **best break in that frame**. `0` means no notable break. Maximum 147.
-- Every frame has exactly one winner. No draws.
+- `score` is each player's points total for the frame. Both are required when logging.
+- `breaks` is each player's **best break in that frame**. `0` means no notable break. Maximum 147, and never more than that player's frame score.
+- Every frame has exactly one winner. No draws. `winner` is the player with the higher `score`, set when the frame is added (level scores can't be added: a re-spotted black settles a tie). It is stored so stats don't depend on `score`.
+- Frames logged before `score` existed have no `score` field; show them without one.
 - Session `id` is the date; if a second session is logged on the same date use `2026-10-17-2`.
 - Keep `sessions` sorted by date, then by creation order. Frame order inside a session is the order played.
 - All stats are calculated from this file. Never store derived numbers.
@@ -75,10 +77,10 @@ Mobile first, 390 px wide is the target. Bottom tab bar with four tabs: Session,
 
 1. Date button (defaults to today, tap to change, so an old night can be logged) and a "Draft saved" label.
 2. Score card: Dan's frames, Damon's frames, big, on one line (`white-space: nowrap`).
-3. "Frames so far" list: frame number, winner dot and name, and the two best breaks.
-4. "Add frame N" card: two big winner buttons (Dan won / Damon won, one must be selected), a best-break control for each player, "Add frame".
+3. "Frames so far" list: frame number, winner dot and name, the frame score (big, e.g. `72 – 35`) with the two best breaks small underneath.
+4. "Add frame N" card: a frame score box for each player (the higher score wins; the leading box takes that player's colour), a best-break control for each player, "Add frame". Add frame stays disabled until both scores are in, they aren't level, and no break is above its player's score; a hint line says why.
    - Break control: minus and plus buttons plus the number itself is tappable to type (`inputmode="numeric"`, 0 to 147). Typing is the fast path for a break like 34.
-   - After "Add frame": reset winner to none, reset both breaks to 0, scroll the new frame into view.
+   - After "Add frame": clear both scores, reset both breaks to 0, scroll the new frame into view.
    - Tap a frame in the list to edit or remove it.
 5. "Confirm session (N frames)": the main button. Disabled with no frames. Confirming writes to GitHub (see below), clears the draft, goes to History.
 6. "Discard draft": asks for confirmation.
@@ -106,7 +108,7 @@ All three are Chart.js, styled to match (no gridline clutter, two series colours
 
 ### History
 
-Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit).
+Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames. Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit).
 
 ### Settings
 
@@ -178,7 +180,7 @@ Type: Barlow Condensed 700 for big numbers, titles and the wordmark (titles 36 p
 
 Shape: cards 16 px radius, buttons 12 to 14 px, minimum touch target 44 px, 12 px gaps, 20 px side padding. Icons are 1.8 px stroke line icons.
 
-Accessibility: real `button` and `a` elements, `aria-label` on icon-only buttons, `aria-pressed` on the winner buttons, text contrast at least 4.5:1, respect `prefers-reduced-motion`.
+Accessibility: real `button` and `a` elements, `aria-label` on icon-only buttons, `aria-pressed` on toggle buttons, text contrast at least 4.5:1, respect `prefers-reduced-motion`.
 
 ## Splash and intro
 

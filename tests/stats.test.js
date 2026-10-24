@@ -181,3 +181,14 @@ test('removeSession', () => {
   assert.deepEqual(Stats.sortSessions(d.sessions).map((s) => s.id), ['2026-09-26', '2026-10-03-2', '2026-10-10']);
   assert.equal(data.sessions.length, 4);
 });
+
+test('winnerFromScore: higher score wins, level is null', () => {
+  assert.equal(Stats.winnerFromScore({ dan: 72, damon: 35 }, ids), 'dan');
+  assert.equal(Stats.winnerFromScore({ dan: 0, damon: 1 }, ids), 'damon');
+  assert.equal(Stats.winnerFromScore({ dan: 40, damon: 40 }, ids), null);
+});
+
+test('frames with a score field give the same stats', () => {
+  const withScore = S.map((s) => ({ ...s, frames: s.frames.map((f) => ({ ...f, score: { dan: 50, damon: 40 } })) }));
+  assert.deepEqual(Stats.summary(withScore, ids), Stats.summary(S, ids));
+});

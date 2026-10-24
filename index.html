@@ -42,7 +42,7 @@
       <div id="frames-wrap" hidden>
         <div class="list-head">
           <h2>Frames so far</h2>
-          <span>Best breaks: <span data-name="0"></span> · <span data-name="1"></span></span>
+          <span>Score: <span data-name="0"></span> – <span data-name="1"></span></span>
         </div>
         <div class="card-f list-card" id="frame-list"></div>
       </div>
@@ -50,8 +50,14 @@
       <div class="card-f" id="frame-form">
         <h2 class="card-title" id="form-title">Add frame 1</h2>
         <div class="two-col">
-          <button type="button" class="winner-btn" data-winner="0" aria-pressed="false"><span data-name="0"></span> won</button>
-          <button type="button" class="winner-btn" data-winner="1" aria-pressed="false"><span data-name="1"></span> won</button>
+          <div>
+            <label class="field-label" for="score-in-0"><span data-name="0"></span> score</label>
+            <input type="text" class="score-input" id="score-in-0" data-p="0" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="–">
+          </div>
+          <div>
+            <label class="field-label" for="score-in-1"><span data-name="1"></span> score</label>
+            <input type="text" class="score-input" id="score-in-1" data-p="1" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" placeholder="–">
+          </div>
         </div>
         <div class="two-col">
           <div>
@@ -71,6 +77,7 @@
             </div>
           </div>
         </div>
+        <p class="form-hint" id="form-hint" aria-live="polite"></p>
         <button type="button" class="btn-f btn-raised w-100" id="add-frame" disabled>Add frame</button>
         <div class="two-col mt-12" id="edit-actions" hidden>
           <button type="button" class="btn-f btn-outline" id="remove-frame">Remove frame</button>

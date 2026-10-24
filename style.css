@@ -13,6 +13,9 @@
   --tabbar-h: 76px;
 }
 
+/* Bootstrap turns on smooth scrolling page-wide; tab switches should jump to the top. */
+:root { scroll-behavior: auto; }
+
 html, body {
   background: var(--bg);
   color: var(--text);
@@ -165,19 +168,28 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .frame-row.selected { background: var(--card-raised); }
 .frame-no { color: var(--muted); width: 28px; }
 .frame-who { flex: 1; display: flex; align-items: center; gap: 10px; }
-.frame-breaks { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; }
+.frame-right { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.frame-score { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; }
+.frame-sub { color: var(--muted); font-size: 12px; }
 
-.winner-btn {
-  min-height: 52px;
+.score-input {
+  width: 100%;
+  height: 60px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--text);
-  font-weight: 600;
-  font-size: 17px;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
 }
-.winner-btn[data-winner="0"][aria-pressed="true"] { background: var(--dan); border-color: var(--dan); color: var(--bg); }
-.winner-btn[data-winner="1"][aria-pressed="true"] { background: var(--damon); border-color: var(--damon); color: var(--bg); }
+.score-input::placeholder { color: var(--line); }
+.score-input:focus { outline: none; border-color: var(--text); }
+/* The leading score takes its player's colour, so the winner shows before Add frame */
+.score-input.leading[data-p="0"] { border-color: var(--dan); color: var(--dan); }
+.score-input.leading[data-p="1"] { border-color: var(--damon); color: var(--damon); }
+.form-hint { color: var(--muted); font-size: 13px; min-height: 18px; margin: -4px 0 8px; }
 .field-label { display: block; color: var(--muted); font-size: 13px; margin-bottom: 6px; }
 .stepper { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .step-btn {
@@ -264,6 +276,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   left: 50%;
   bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
   transform: translate(-50%, 20px);
+  width: max-content;
   max-width: calc(100% - 40px);
   padding: 12px 18px;
   border-radius: 12px;

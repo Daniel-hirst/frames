@@ -107,6 +107,13 @@
     });
   }
 
+  // Frame winner is the player with the higher score; null if level (a re-spotted black settles it).
+  function winnerFromScore(score, playerIds) {
+    const [a, b] = playerIds;
+    if (score[a] === score[b]) return null;
+    return score[a] > score[b] ? a : b;
+  }
+
   // Session id is the date; a second session on the same date gets "-2", then "-3".
   function nextSessionId(sessions, date, ignoreId) {
     const taken = new Set(sessions.map((s) => s.id).filter((id) => id !== ignoreId));
@@ -141,7 +148,7 @@
     sortSessions, lastSessions, allFrames, summary,
     sessionScore, sessionBestBreak,
     rollingAvgBreak, cumulativeWins, sessionBestBreaks,
-    nextSessionId, upsertSession, removeSession
+    winnerFromScore, nextSessionId, upsertSession, removeSession
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Stats;
