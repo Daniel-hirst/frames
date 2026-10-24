@@ -18,6 +18,7 @@
     return owner && name ? owner[1] + '/' + name : '';
   }
   const MAX_BREAK = 147;
+  const MAX_SCORE = 147;   // foul points can push a frame higher in theory, never in practice here
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let data = { players: [{ id: 'dan', name: 'Dan' }, { id: 'damon', name: 'Damon' }], sessions: [] };
@@ -247,7 +248,8 @@
     $('.score-input')
       .on('focus', function () { this.select(); })
       .on('input', function () {
-        const digits = this.value.replace(/\D/g, '');
+        let digits = this.value.replace(/\D/g, '');
+        if (Number(digits) > MAX_SCORE) digits = String(MAX_SCORE);
         if (digits !== this.value) this.value = digits;
         draft.form.scores[this.dataset.p] = digits === '' ? '' : Number(digits);
         saveDraft();
