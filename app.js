@@ -75,7 +75,7 @@
     $('#toast-action').prop('hidden', !action).text(action ? action.label : '').off('click')
       .on('click', () => { $('#toast').removeClass('show'); action.fn(); });
     $('#toast').toggleClass('error', !!isError).addClass('show');
-    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 9000 : 2500);
+    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 9000 : action ? 6000 : 2500);
   }
 
   // Bootstrap modal in place of window.confirm. Resolves true on OK.
@@ -117,14 +117,17 @@
 
   // Logger: read through the API so a fresh save shows at once; fall back to the published data.json.
   // Read-only: the published data.json (GitHub Pages can lag a minute or two). On failure keep what we had.
-  async function loadData() {
+  // quiet: a background refresh. No toast or banner if it fails, since what's on screen is still fine.
+  let lastLoad = 0;
+  async function loadData(quiet) {
+    lastLoad = Date.now();
     if (isLogger) {
       try {
         data = (await GitHub.load(repo(), token())).data;
         $('#load-error').prop('hidden', true);
         return;
       } catch (e) {
-        toast('Couldn’t read from GitHub: ' + e.message + ' Showing the published copy.', true);
+        if (!quiet) toast('Couldn’t read from GitHub: ' + e.message + ' Showing the published copy.', true);
       }
     }
     try {
@@ -133,8 +136,17 @@
       data = await res.json();
       $('#load-error').prop('hidden', true);
     } catch (e) {
-      $('#load-error').prop('hidden', false);
+      if (!quiet) $('#load-error').prop('hidden', false);
     }
+  }
+
+  // A home-screen app is often resumed, not relaunched: fetch the latest when it comes back.
+  // Only `data` is replaced; the draft lives apart from it and is never touched.
+  async function refreshOnReturn() {
+    if (document.visibilityState !== 'visible' || saving || Date.now() - lastLoad < 30000) return;
+    const before = JSON.stringify(data);
+    await loadData(true);
+    if (!saving && JSON.stringify(data) !== before) refreshAll();
   }
 
   function applyNames() {
@@ -404,6 +416,8 @@
         '</button>' +
         (open
           ? '<div class="hist-frames">' + s.frames.map((f, i) => frameRow(f, i + 1, 'div')).join('') +
+            '<div class="hist-share"><button type="button" class="btn-f btn-raised" data-action="share">' +
+              '<i class="bi bi-box-arrow-up" aria-hidden="true"></i> Share this night</button></div>' +
             '<div class="two-col hist-actions logger-only">' +
               '<button type="button" class="btn-f btn-outline" data-action="edit">Edit session</button>' +
               '<button type="button" class="btn-f btn-outline muted" data-action="delete">Delete</button>' +
@@ -412,6 +426,7 @@
         '</div>';
     }
     $('#history-body').html(html);
+    for (const s of data.sessions) if (expanded.has(s.id)) shareImage(s).catch(() => {});
   }
 
   function bindHistory() {
@@ -442,9 +457,10 @@
       const ok = await confirmDialog('Delete this session?', shortDate(s.date) + ', ' + scoreLine(s) + '.', 'Delete');
       if (!ok) return;
       const btn = $(this).prop('disabled', true).text('Deleting…');
+      let gone = null;
       try {
         data = await GitHub.save(repo(), token(), (d) => {
-          const gone = d.sessions.find((x) => x.id === id);
+          gone = d.sessions.find((x) => x.id === id) || null;
           return gone ? { data: Stats.removeSession(d, id), message: commitMessage('Delete session', gone, d) } : null;
         });
       } catch (e) {
@@ -455,8 +471,85 @@
       expanded.delete(id);
       if (draft.editingId === id) { draft = newDraft(); changed(); }
       renderData();
-      toast('Session deleted');
+      if (gone) toast('Session deleted', false, { label: 'Undo', fn: () => restoreSession(gone) });
+      else toast('Session deleted');
     });
+
+    $('#history-body').on('click', '[data-action="share"]', function () {
+      shareSession(String($(this).closest('.hist-card').data('id')));
+    });
+  }
+
+  // Undo a delete: a new commit that puts the session back, so the history shows both.
+  async function restoreSession(s) {
+    let back;
+    try {
+      data = await GitHub.save(repo(), token(), (d) => {
+        const next = Stats.restoreSession(d, s);
+        back = next.sessions.find((x) => x.frames === s.frames);
+        return { data: next, message: commitMessage('Restore session', s, d) };
+      });
+    } catch (e) {
+      toast(e.message + ' The session is still deleted.', true, { label: 'Retry', fn: () => restoreSession(s) });
+      return;
+    }
+    expanded.add(back.id);
+    renderData();
+    toast('Session restored');
+  }
+
+  /* ---------- share a night ---------- */
+
+  // The picture is drawn when the night is opened, so tapping Share can open the share sheet straight away:
+  // iOS refuses navigator.share if too much time has passed since the tap.
+  const shareImages = new Map();   // session JSON + names -> Promise<Blob>
+  function shareImage(s) {
+    const key = JSON.stringify([s, data.players]);
+    if (!shareImages.has(key)) {
+      const [a, b] = ids();
+      const css = getComputedStyle(document.documentElement);
+      shareImages.set(key, ShareCard.render({
+        date: longDate(s.date),
+        names: [nameOf(0), nameOf(1)],
+        colours: [css.getPropertyValue('--dan').trim(), css.getPropertyValue('--damon').trim()],
+        score: [Stats.sessionScore(s, a), Stats.sessionScore(s, b)],
+        best: [Stats.sessionBestBreak(s, a), Stats.sessionBestBreak(s, b)],
+        frames: s.frames.map((f) => ({
+          winner: indexOf(f.winner),
+          score: f.score ? [f.score[a], f.score[b]] : null,
+          breaks: [f.breaks[a] || 0, f.breaks[b] || 0]
+        }))
+      }).catch((e) => { shareImages.delete(key); throw e; }));
+    }
+    return shareImages.get(key);
+  }
+
+  async function shareSession(id) {
+    const s = data.sessions.find((x) => x.id === id);
+    if (!s) return;
+    let blob;
+    try {
+      blob = await shareImage(s);
+    } catch (e) {
+      toast('Couldn’t make the picture.', true);
+      return;
+    }
+    const file = new File([blob], 'frames-' + s.id + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+      } catch (e) {
+        if (e.name === 'NotAllowedError') toast('Tap Share again.');   // the picture took too long; it's ready now
+        else if (e.name !== 'AbortError') toast('Couldn’t share: ' + e.message, true);
+      }
+      return;
+    }
+    // No share sheet (desktop browsers): download the picture instead.
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = file.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
   /* ---------- stats ---------- */
@@ -466,8 +559,13 @@
     $('.segmented').prop('hidden', false);
     $('.seg-btn').each(function () { $(this).attr('aria-pressed', String(this.dataset.range === statsRange)); });
 
-    const r = Stats.summary(data.sessions, ids(), statsRange === 'last10' ? { last: 10 } : null);
+    const opts = statsRange === 'last10' ? { last: 10 } : null;
+    const r = Stats.summary(data.sessions, ids(), opts);
+    const pts = Stats.points(data.sessions, ids(), opts);
+    const rec = Stats.records(data.sessions, ids(), opts);
     const [pa, pb] = ids().map((id) => r.players[id]);
+    const [ta, tb] = ids().map((id) => pts.players[id]);
+    const num = (n) => n.toLocaleString('en-GB');
     const pct = (p) => Math.round(p.winRate * 100) + '%';
     const n0 = esc(nameOf(0)), n1 = esc(nameOf(1));
 
@@ -486,6 +584,12 @@
         '<div class="h2h-nums big-num"><span>' + pa.won + '</span><span>' + pb.won + '</span></div>' +
         '<div class="split-bar" aria-hidden="true"><div class="p0" style="flex:' + (pa.won || 0.0001) + '"></div><div class="p1" style="flex:' + (pb.won || 0.0001) + '"></div></div>' +
         '<div class="h2h-pct"><span>' + pct(pa) + ' win rate</span><span>' + pct(pb) + ' win rate</span></div>' +
+        (pts.frames
+          ? '<div class="h2h-points">' +
+              '<div class="h2h-points-row"><span class="big-num">' + num(ta.total) + '</span><span class="h2h-points-label">Points</span><span class="big-num">' + num(tb.total) + '</span></div>' +
+              '<div class="h2h-pct"><span>' + ta.avgPerFrame.toFixed(1) + ' per frame</span><span>' + tb.avgPerFrame.toFixed(1) + ' per frame</span></div>' +
+            '</div>'
+          : '') +
       '</div>' +
       '<div class="two-col">' + streakCard(pa, 0) + streakCard(pb, 1) + '</div>' +
       '<div class="card-f stats-table">' +
@@ -495,8 +599,50 @@
         row('20+ breaks', pa.breaks20, pb.breaks20) +
         row('Avg best break per frame', pa.avgBreak.toFixed(1), pb.avgBreak.toFixed(1)) +
       '</div>' +
-      '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>'
+      recordsCard(rec) +
+      '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>' +
+      (pts.closest
+        ? '<button type="button" class="stat-line stat-link" data-session="' + esc(pts.closest.sessionId) + '">' +
+            '<span>Closest frame<span class="stat-date">' + shortDate(pts.closest.date) + ', frame ' + pts.closest.frame + '</span></span>' +
+            '<span class="big-num">' + pts.closest.score[ids()[0]] + '–' + pts.closest.score[ids()[1]] + '</span></button>'
+        : '')
     );
+  }
+
+  // "10 Oct"
+  const dayMonth = (iso) => parseDate(iso).getDate() + ' ' + MONTHS[parseDate(iso).getMonth()].slice(0, 3);
+
+  // Each player's records, with when they were set. Tapping one opens that night in History.
+  function recordsCard(rec) {
+    const [a, b] = ids();
+    const cell = (x, value) => (x
+      ? '<button type="button" class="rec-cell" data-session="' + esc(x.sessionId || x.from.sessionId) + '">' +
+          '<span class="big-num">' + value + '</span>' +
+          '<span class="rec-date">' + (x.from
+            ? dayMonth(x.from.date) + (x.from.date !== x.to.date ? ' – ' + dayMonth(x.to.date) : '')
+            : dayMonth(x.date)) + '</span></button>'
+      : '<span class="big-num muted">–</span>');
+    const row = (label, key, fmt) =>
+      '<div class="tr"><span class="td-label">' + label + '</span>' +
+      cell(rec[a][key], rec[a][key] && fmt(rec[a][key])) + cell(rec[b][key], rec[b][key] && fmt(rec[b][key])) + '</div>';
+    const value = (x) => x.value;
+    return '<div class="card-f stats-table records">' +
+      '<div class="tr"><span>Records</span><span class="p0">' + esc(nameOf(0)) + '</span><span class="p1">' + esc(nameOf(1)) + '</span></div>' +
+      row('Highest break', 'highestBreak', value) +
+      row('Highest frame score', 'highestScore', value) +
+      row('Biggest frame win', 'biggestWin', (x) => '+' + x.value) +
+      row('Best night', 'bestNight', (x) => x.won + '–' + x.lost) +
+      row('Longest win streak', 'longestStreak', value) +
+    '</div>';
+  }
+
+  // Open a session in History, expanded and scrolled to.
+  let scrollToSession = null;
+  function showSession(id) {
+    expanded.add(id);
+    renderHistory();
+    scrollToSession = id;
+    location.hash = '#history';
   }
 
   /* ---------- charts ---------- */
@@ -734,6 +880,11 @@
     if (name === 'charts') renderCharts();
     if (name === 'settings') renderSettings();
     window.scrollTo(0, 0);
+    if (name === 'history' && scrollToSession) {
+      const card = $('#history-body .hist-card').filter((i, el) => String($(el).data('id')) === scrollToSession).get(0);
+      if (card) card.scrollIntoView({ block: 'center' });
+    }
+    scrollToSession = null;
   }
 
   $(function () {
@@ -749,9 +900,11 @@
       renderStats();
       $('#eyebrow').text(SCREENS.stats.eyebrow());
     });
+    $('#stats-body').on('click', '[data-session]', function () { showSession(String(this.dataset.session)); });
     renderSession();
     $(window).on('hashchange', route);
     route();
+    document.addEventListener('visibilitychange', refreshOnReturn);
     loadData().then(() => {
       refreshAll();
       if (current === 'settings') renderSettings();

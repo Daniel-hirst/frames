@@ -48,9 +48,11 @@
     };
   }
 
+  const rangeOf = (sessions, opts) => (opts && opts.last ? lastSessions(sessions, opts.last) : sortSessions(sessions));
+
   // Everything on the Stats screen. Pass { last: 10 } for the "Last 10 sessions" range.
   function summary(sessions, playerIds, opts) {
-    const range = opts && opts.last ? lastSessions(sessions, opts.last) : sortSessions(sessions);
+    const range = rangeOf(sessions, opts);
     const frames = allFrames(range);
     const players = {};
     for (const id of playerIds) players[id] = playerStats(frames, id);
@@ -114,6 +116,79 @@
     return score[a] > score[b] ? a : b;
   }
 
+  // Every frame in play order, with the session it belongs to and its number in that session.
+  function framesWithSession(range) {
+    return range.flatMap((s) => s.frames.map((f, i) => ({ f, session: s, n: i + 1 })));
+  }
+  const at = (x) => ({ sessionId: x.session.id, date: x.session.date });
+
+  // Frame points. Frames logged before scores were recorded have no `score` and are left out.
+  // closest: the frame with the smallest winning margin (earliest on a tie).
+  function points(sessions, playerIds, opts) {
+    const scored = framesWithSession(rangeOf(sessions, opts)).filter((x) => x.f.score);
+    const [a, b] = playerIds;
+    const players = {};
+    for (const id of playerIds) {
+      const total = scored.reduce((t, x) => t + x.f.score[id], 0);
+      players[id] = { total, avgPerFrame: scored.length ? round1(total / scored.length) : 0 };
+    }
+    let closest = null;
+    for (const x of scored) {
+      const margin = Math.abs(x.f.score[a] - x.f.score[b]);
+      if (!closest || margin < closest.margin) closest = Object.assign(at(x), { frame: x.n, score: x.f.score, winner: x.f.winner, margin });
+    }
+    return { frames: scored.length, players, closest };
+  }
+
+  // Each player's records, with where they were set. A record stands until beaten, so ties keep the earlier one.
+  // null when a player has no such record yet (no break, no frame won, no night won).
+  function records(sessions, playerIds, opts) {
+    const range = rangeOf(sessions, opts);
+    const frames = framesWithSession(range);
+    const out = {};
+    for (const id of playerIds) {
+      const opp = playerIds.find((p) => p !== id);
+      const r = { highestBreak: null, highestScore: null, biggestWin: null, bestNight: null, longestStreak: null };
+      for (const x of frames) {
+        const brk = x.f.breaks[id] || 0;
+        if (brk > 0 && (!r.highestBreak || brk > r.highestBreak.value)) r.highestBreak = Object.assign(at(x), { value: brk });
+        if (!x.f.score) continue;
+        const pts = x.f.score[id];
+        if (pts > 0 && (!r.highestScore || pts > r.highestScore.value)) r.highestScore = Object.assign(at(x), { value: pts });
+        const margin = pts - x.f.score[opp];
+        if (x.f.winner === id && (!r.biggestWin || margin > r.biggestWin.value)) {
+          r.biggestWin = Object.assign(at(x), { value: margin, score: x.f.score });
+        }
+      }
+      // Best night: biggest frame margin in a session this player won; more frames won breaks a tie.
+      for (const s of range) {
+        const won = sessionScore(s, id), lost = sessionScore(s, opp);
+        const best = r.bestNight;
+        if (won > lost && (!best || won - lost > best.won - best.lost || (won - lost === best.won - best.lost && won > best.won))) {
+          r.bestNight = { sessionId: s.id, date: s.date, won, lost };
+        }
+      }
+      // Longest run of frames won, across sessions, with the sessions it started and ended in.
+      let run = 0, start = null;
+      for (const x of frames) {
+        if (x.f.winner !== id) { run = 0; continue; }
+        if (run === 0) start = x;
+        run++;
+        if (!r.longestStreak || run > r.longestStreak.value) r.longestStreak = { value: run, from: at(start), to: at(x) };
+      }
+      out[id] = r;
+    }
+    return out;
+  }
+
+  // Put a deleted session back. Keeps its id unless that id has been reused since, then it gets a fresh one.
+  function restoreSession(data, session) {
+    if (!data.sessions.some((s) => s.id === session.id)) {
+      return Object.assign({}, data, { sessions: sortSessions(data.sessions.concat([session])) });
+    }
+    return upsertSession(data, session).data;
+  }
+
   // Session id is the date; a second session on the same date gets "-2", then "-3".
   function nextSessionId(sessions, date, ignoreId) {
     const taken = new Set(sessions.map((s) => s.id).filter((id) => id !== ignoreId));
@@ -148,7 +223,8 @@
     sortSessions, lastSessions, allFrames, summary,
     sessionScore, sessionBestBreak,
     rollingAvgBreak, cumulativeWins, sessionBestBreaks,
-    winnerFromScore, nextSessionId, upsertSession, removeSession
+    points, records,
+    winnerFromScore, nextSessionId, upsertSession, removeSession, restoreSession
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Stats;

@@ -28,7 +28,7 @@ Note: the PNGs were rendered without the Barlow fonts, so lettering is a fallbac
 - Single page, hash routing: `#session`, `#stats`, `#charts`, `#history`, `#settings`.
 - Installable to the home screen: `manifest.webmanifest`, icons from `design/7-app-icon-1024.png`, `apple-touch-icon`, `theme-color` `#0E2F25`, standalone display.
 
-Suggested files: `index.html`, `app.js` (UI + routing), `stats.js` (pure functions, no DOM), `github.js` (load/save), `style.css`, `data.json`, `manifest.webmanifest`, `icons/`.
+Suggested files: `index.html`, `app.js` (UI + routing), `stats.js` (pure functions, no DOM), `github.js` (load/save), `share.js` (share-a-night picture), `style.css`, `data.json`, `manifest.webmanifest`, `icons/`.
 
 ## Data model
 
@@ -99,6 +99,9 @@ Toggle: All time / Last 10 sessions. Everything below recalculates for the chose
 - Streaks per player: current win streak and longest win streak.
 - Breaks table: highest break, 30+ breaks, 20+ breaks, average best break per frame.
 - Average frames per session.
+- Points: total frame points each in the head-to-head card, and points per frame.
+- Records: per player, highest break, highest frame score, biggest frame win, best night, longest win streak, each with the date it was set. Tapping one opens that night in History.
+- Closest frame (smallest winning margin), tappable.
 
 ### Charts
 
@@ -110,7 +113,9 @@ All three are Chart.js, styled to match (no gridline clutter, two series colours
 
 ### History
 
-Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames. Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit).
+Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames. Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit). The "Session deleted" toast offers **Undo**, which commits `Restore session ...` (same id unless it was reused meanwhile).
+
+**Share this night** (both modes): draws a 1080-wide PNG of the night in the app's style (`share.js`) and opens the share sheet, or downloads it where there is no share sheet. The picture is drawn when the row is expanded, because iOS refuses `navigator.share` if too long passes after the tap.
 
 ### Settings
 
@@ -134,6 +139,9 @@ Treat all frames in order: sort sessions by date, then frames in played order.
 - **Session best break** (chart 3): max of `breaks[player]` across the session's frames.
 - **Rolling average best break** (chart 1): for each session, a player's mean best break per frame in that session; the rolling value is the mean of those over the last 5 sessions up to and including this one (fewer at the start).
 - **Cumulative frames won** (chart 2): running total per player after each session.
+- **Points**: per player, sum of `score[player]` over frames that have a `score` (older frames without one are skipped); points per frame = total / scored frames, one decimal place.
+- **Closest frame**: smallest winning margin among scored frames; earliest on a tie.
+- **Records**: highest break, highest frame score, biggest frame win (winning margin), best night (session won by the biggest frame margin, then most frames won), longest win streak (with the sessions it started and ended in). Each carries its session and date. A record equalled later stays with the first time it was set. `null` when there is none (no break, no frame won).
 - **Last 10 sessions** filter: take the 10 most recent sessions and run every rule above on them only. Streaks inside the filtered range only.
 
 ## Saving to GitHub
@@ -156,6 +164,7 @@ Loading data:
 
 - Read-only mode: `fetch('data.json', { cache: 'no-store' })`. GitHub Pages can take a minute or two to publish a new commit, so Damon may see a night late. Acceptable.
 - Logger mode: read through the API on load so Dan always sees his own latest save immediately, falling back to `data.json` if the request fails.
+- When the app comes back to the front (at most every 30 s), reload quietly: no toast or banner on failure, never during a save, and the draft is never touched.
 
 The repo is public (Pages on private repos needs a paid plan). Names and scores are public. That is fine for this app.
 
