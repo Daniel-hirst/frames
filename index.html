@@ -11,7 +11,9 @@
   <meta name="apple-mobile-web-app-title" content="Frames">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Not "black-translucent": in home-screen apps iOS then sizes the page as if the status bar took space
+       while drawing it from the top, leaving a status-bar-high gap under the fixed tab bar. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <!-- iOS launch screens, rendered from the splash design (design/6-splash.png) at each iPhone size -->
   <!-- iPhone 16 Pro Max, 17 Pro Max -->
   <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1320x2868.png">
