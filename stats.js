@@ -107,10 +107,41 @@
     });
   }
 
+  // Session id is the date; a second session on the same date gets "-2", then "-3".
+  function nextSessionId(sessions, date, ignoreId) {
+    const taken = new Set(sessions.map((s) => s.id).filter((id) => id !== ignoreId));
+    if (!taken.has(date)) return date;
+    let n = 2;
+    while (taken.has(date + '-' + n)) n++;
+    return date + '-' + n;
+  }
+
+  // Add a session, or replace the one with id `replaceId`. Returns new data, sorted; input untouched.
+  // A replaced session keeps its id (and place) unless its date changed.
+  function upsertSession(data, session, replaceId) {
+    let sessions = data.sessions.slice();
+    const old = replaceId ? sessions.find((s) => s.id === replaceId) : null;
+    let saved;
+    if (old && old.date === session.date) {
+      saved = Object.assign({}, session, { id: old.id });
+      sessions[sessions.indexOf(old)] = saved;
+    } else {
+      if (old) sessions = sessions.filter((s) => s !== old);
+      saved = Object.assign({}, session, { id: nextSessionId(sessions, session.date) });
+      sessions.push(saved);
+    }
+    return { data: Object.assign({}, data, { sessions: sortSessions(sessions) }), session: saved };
+  }
+
+  function removeSession(data, id) {
+    return Object.assign({}, data, { sessions: data.sessions.filter((s) => s.id !== id) });
+  }
+
   const Stats = {
     sortSessions, lastSessions, allFrames, summary,
     sessionScore, sessionBestBreak,
-    rollingAvgBreak, cumulativeWins, sessionBestBreaks
+    rollingAvgBreak, cumulativeWins, sessionBestBreaks,
+    nextSessionId, upsertSession, removeSession
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Stats;

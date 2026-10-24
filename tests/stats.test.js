@@ -137,3 +137,47 @@ test('one session: values valid and charts have one point', () => {
   assert.equal(Stats.cumulativeWins(one, ids).length, 1);
   assert.equal(Stats.sessionBestBreaks(one, ids).length, 1);
 });
+
+test('nextSessionId: date, then -2, -3', () => {
+  assert.equal(Stats.nextSessionId(S, '2026-10-17'), '2026-10-17');
+  assert.equal(Stats.nextSessionId(S, '2026-10-10'), '2026-10-10-2');
+  assert.equal(Stats.nextSessionId(S, '2026-10-03'), '2026-10-03-3');
+  assert.equal(Stats.nextSessionId(S, '2026-10-10', '2026-10-10'), '2026-10-10');
+});
+
+const frame = { winner: 'dan', breaks: { dan: 5, damon: 0 } };
+
+test('upsertSession: adds a new session in date order', () => {
+  const { data: d, session } = Stats.upsertSession(data, { date: '2026-10-01', frames: [frame] });
+  assert.equal(session.id, '2026-10-01');
+  assert.deepEqual(d.sessions.map((s) => s.id),
+    ['2026-09-26', '2026-10-01', '2026-10-03', '2026-10-03-2', '2026-10-10']);
+  assert.equal(data.sessions.length, 4);   // input untouched
+});
+
+test('upsertSession: second session on a date goes after the first', () => {
+  const { data: d, session } = Stats.upsertSession(data, { date: '2026-10-10', frames: [frame] });
+  assert.equal(session.id, '2026-10-10-2');
+  assert.deepEqual(d.sessions.slice(-2).map((s) => s.id), ['2026-10-10', '2026-10-10-2']);
+});
+
+test('upsertSession: replace by id keeps id and same-date order', () => {
+  const { data: d, session } = Stats.upsertSession(data, { date: '2026-10-03', frames: [frame] }, '2026-10-03');
+  assert.equal(session.id, '2026-10-03');
+  assert.deepEqual(d.sessions.map((s) => s.id),
+    ['2026-09-26', '2026-10-03', '2026-10-03-2', '2026-10-10']);
+  assert.deepEqual(d.sessions[1].frames, [frame]);
+});
+
+test('upsertSession: replace with a new date moves it and re-ids it', () => {
+  const { data: d, session } = Stats.upsertSession(data, { date: '2026-10-10', frames: [frame] }, '2026-09-26');
+  assert.equal(session.id, '2026-10-10-2');
+  assert.deepEqual(d.sessions.map((s) => s.id),
+    ['2026-10-03', '2026-10-03-2', '2026-10-10', '2026-10-10-2']);
+});
+
+test('removeSession', () => {
+  const d = Stats.removeSession(data, '2026-10-03');
+  assert.deepEqual(Stats.sortSessions(d.sessions).map((s) => s.id), ['2026-09-26', '2026-10-03-2', '2026-10-10']);
+  assert.equal(data.sessions.length, 4);
+});

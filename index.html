@@ -24,21 +24,100 @@
     </header>
 
     <section class="screen" id="screen-session" hidden>
-      <div class="card-f empty">Session screen comes in step 3.</div>
+      <div class="session-top">
+        <label class="date-btn">
+          <i class="bi bi-calendar3" aria-hidden="true"></i>
+          <span id="date-label"></span>
+          <input type="date" id="date-input" aria-label="Session date">
+        </label>
+        <span class="draft-label" id="draft-label" hidden><span class="dot p0"></span>Draft saved</span>
+      </div>
+
+      <div class="card-f score-card">
+        <span class="score-name p0" data-name="0"></span>
+        <span class="score-digits"><span id="score-0">0</span><span class="score-dash">–</span><span id="score-1">0</span></span>
+        <span class="score-name p1" data-name="1"></span>
+      </div>
+
+      <div id="frames-wrap" hidden>
+        <div class="list-head">
+          <h2>Frames so far</h2>
+          <span>Best breaks: <span data-name="0"></span> · <span data-name="1"></span></span>
+        </div>
+        <div class="card-f list-card" id="frame-list"></div>
+      </div>
+
+      <div class="card-f" id="frame-form">
+        <h2 class="card-title" id="form-title">Add frame 1</h2>
+        <div class="two-col">
+          <button type="button" class="winner-btn" data-winner="0" aria-pressed="false"><span data-name="0"></span> won</button>
+          <button type="button" class="winner-btn" data-winner="1" aria-pressed="false"><span data-name="1"></span> won</button>
+        </div>
+        <div class="two-col">
+          <div>
+            <label class="field-label" for="break-0"><span data-name="0"></span> best break</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" data-p="0" data-d="-1" aria-label="Lower break">−</button>
+              <input type="text" class="break-input" id="break-0" data-p="0" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off">
+              <button type="button" class="step-btn" data-p="0" data-d="1" aria-label="Raise break">+</button>
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="break-1"><span data-name="1"></span> best break</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" data-p="1" data-d="-1" aria-label="Lower break">−</button>
+              <input type="text" class="break-input" id="break-1" data-p="1" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off">
+              <button type="button" class="step-btn" data-p="1" data-d="1" aria-label="Raise break">+</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-f btn-raised w-100" id="add-frame" disabled>Add frame</button>
+        <div class="two-col mt-12" id="edit-actions" hidden>
+          <button type="button" class="btn-f btn-outline" id="remove-frame">Remove frame</button>
+          <button type="button" class="btn-f btn-outline" id="cancel-edit">Cancel</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-f btn-primary-f w-100" id="confirm" disabled>Confirm session (0 frames)</button>
+      <button type="button" class="link-btn" id="discard">Discard draft</button>
+      <p class="test-note">Test mode: confirmed sessions are saved on this device only, until GitHub saving is set up.</p>
     </section>
+
     <section class="screen" id="screen-stats" hidden>
-      <div class="card-f empty">Stats screen comes in step 4.</div>
+      <div class="segmented" role="group" aria-label="Range">
+        <button type="button" class="seg-btn" data-range="all" aria-pressed="true">All time</button>
+        <button type="button" class="seg-btn" data-range="last10" aria-pressed="false">Last 10 sessions</button>
+      </div>
+      <div id="stats-body"></div>
     </section>
+
     <section class="screen" id="screen-charts" hidden>
-      <div class="card-f empty">Charts screen comes in step 4.</div>
+      <div id="charts-body"></div>
     </section>
+
     <section class="screen" id="screen-history" hidden>
-      <div class="card-f empty">History screen comes in step 4.</div>
+      <div id="history-body"></div>
     </section>
+
     <section class="screen" id="screen-settings" hidden>
       <div class="card-f empty">Settings screen comes in step 5.</div>
     </section>
   </main>
+
+  <div class="toast-f" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal fade" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <h2 class="card-title" id="confirm-title"></h2>
+        <p id="confirm-body"></p>
+        <div class="two-col">
+          <button type="button" class="btn-f btn-outline" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-f btn-primary-f" id="confirm-ok"></button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <nav class="tabbar" aria-label="Main">
     <a href="#session" class="tab logger-only" data-route="session"><i class="bi bi-plus-circle"></i><span>Session</span></a>
