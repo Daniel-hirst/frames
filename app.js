@@ -33,7 +33,7 @@
     stats:    { eyebrow: () => (statsRange === 'all' ? 'All time' : 'Last 10 sessions'), title: () => 'Stats' },
     charts:   { eyebrow: () => 'All time', title: () => 'Charts' },
     history:  { eyebrow: () => plural(data.sessions.length, 'session'), title: () => 'History' },
-    settings: { eyebrow: () => 'Only you see this', title: () => 'Settings' }
+    settings: { eyebrow: () => (isLogger ? 'Only you see this' : 'Set up saving'), title: () => 'Settings' }
   };
 
   /* ---------- helpers ---------- */
@@ -705,7 +705,7 @@
 
   function route() {
     let name = location.hash.slice(1);
-    // #settings always works, so Dan can add a token on a new device.
+    // Settings is reachable in both modes (the cog is always shown), so a token can be added on a new device or home-screen app.
     if (!SCREENS[name] || (name === 'session' && !isLogger)) {
       name = isLogger ? 'session' : 'stats';
       history.replaceState(null, '', '#' + name);

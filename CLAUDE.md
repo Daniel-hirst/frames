@@ -65,9 +65,9 @@ One file, `data.json`, in the repo root. Only **confirmed** sessions are in it.
 ## Two modes
 
 - **Logger mode** (a GitHub token is saved on this device): Session tab and Settings cog are visible, everything is editable. Only Dan's phone.
-- **Read-only mode** (no token): hide the Session tab and the settings cog. Stats, Charts and History work the same but have no Edit or Delete buttons. This is Damon's view. He needs no setup, he just opens the link.
+- **Read-only mode** (no token): hide the Session tab. Stats, Charts and History work the same but have no Edit or Delete buttons. This is Damon's view. He needs no setup, he just opens the link.
 
-Dan needs a way into Settings on a new device even though the cog is hidden when there is no token, so `#settings` always works if typed in the URL.
+The settings cog shows in both modes. A home-screen app has its own storage (no token carried over from Safari) and no address bar, so Settings must be reachable without a token. Damon seeing the cog is fine. `#settings` also works if typed in the URL.
 
 Adding `?mode=readonly` to the URL shows the read-only view on a device that has a token, so Dan can check what Damon sees. There is no URL switch into logger mode: that needs the token.
 
