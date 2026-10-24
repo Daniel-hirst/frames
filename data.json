@@ -1,0 +1,7 @@
+{
+  "players": [
+    { "id": "dan", "name": "Dan" },
+    { "id": "damon", "name": "Damon" }
+  ],
+  "sessions": []
+}

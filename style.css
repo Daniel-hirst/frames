@@ -1,0 +1,113 @@
+:root {
+  --bg: #0E2F25;
+  --card: #154634;
+  --card-raised: #1C5740;
+  --card-inset: #123D2D;
+  --tabbar: #0A261D;
+  --line: #2A6A50;
+  --text: #F4F1E8;
+  --muted: #A8C7B8;
+  --dan: #F2C94C;
+  --damon: #8EC5FF;
+  --red: #E0533D;
+  --tabbar-h: 76px;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', system-ui, sans-serif;
+  font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(var(--tabbar-h) + 24px + env(safe-area-inset-bottom));
+}
+
+/* Header */
+.screen-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.screen-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.05;
+  margin: 2px 0 0;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 20px;
+  text-decoration: none;
+}
+.icon-btn:hover, .icon-btn:focus-visible { color: var(--text); background: var(--card-raised); }
+
+/* Cards */
+.card-f {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.empty { color: var(--muted); text-align: center; padding: 32px 16px; }
+
+/* Player colours (always paired with the name) */
+.c-dan { color: var(--dan); }
+.c-damon { color: var(--damon); }
+
+/* Tab bar */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  background: var(--tabbar);
+  border-top: 1px solid var(--line);
+}
+.tab {
+  flex: 1 1 0;
+  max-width: 120px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+.tab i { font-size: 20px; line-height: 1; }
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--card); color: var(--text); font-weight: 600; }
+
+/* Read-only mode hides logger controls */
+body.readonly .logger-only { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

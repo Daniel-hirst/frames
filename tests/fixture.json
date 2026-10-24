@@ -1,0 +1,42 @@
+{
+  "players": [
+    { "id": "dan", "name": "Dan" },
+    { "id": "damon", "name": "Damon" }
+  ],
+  "sessions": [
+    {
+      "id": "2026-10-10",
+      "date": "2026-10-10",
+      "frames": [
+        { "winner": "dan",   "breaks": { "dan": 20, "damon": 19 } },
+        { "winner": "dan",   "breaks": { "dan": 0,  "damon": 0 } }
+      ]
+    },
+    {
+      "id": "2026-10-03",
+      "date": "2026-10-03",
+      "frames": [
+        { "winner": "dan",   "breaks": { "dan": 22, "damon": 5 } },
+        { "winner": "dan",   "breaks": { "dan": 8,  "damon": 31 } }
+      ]
+    },
+    {
+      "id": "2026-09-26",
+      "date": "2026-09-26",
+      "frames": [
+        { "winner": "dan",   "breaks": { "dan": 34, "damon": 12 } },
+        { "winner": "damon", "breaks": { "dan": 0,  "damon": 29 } },
+        { "winner": "dan",   "breaks": { "dan": 18, "damon": 0 } }
+      ]
+    },
+    {
+      "id": "2026-10-03-2",
+      "date": "2026-10-03",
+      "frames": [
+        { "winner": "damon", "breaks": { "dan": 0,  "damon": 20 } },
+        { "winner": "damon", "breaks": { "dan": 12, "damon": 44 } },
+        { "winner": "damon", "breaks": { "dan": 30, "damon": 0 } }
+      ]
+    }
+  ]
+}
