@@ -11,6 +11,7 @@
   --damon: #8EC5FF;
   --red: #E0533D;
   --ok: #5BD08A;
+  --error: #B33A28;   /* deeper than the red ball so white text reaches 4.5:1 */
   --tabbar-h: 76px;
 }
 
@@ -141,8 +142,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   cursor: pointer;
 }
 .date-btn input {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
+  position: absolute; inset: -1px;   /* over the border too, so the tap area is the full 44 px */
+  width: calc(100% + 2px); height: calc(100% + 2px);
   opacity: 0;
   cursor: pointer;
 }
@@ -340,7 +341,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .toast-f.show #toast-action { pointer-events: auto; }
 .toast-f { display: flex; align-items: center; gap: 12px; }
 #toast-action { min-height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid currentColor; background: none; color: inherit; font-weight: 600; flex: none; }
-.toast-f.error { background: var(--red); color: var(--text); }
+.toast-f.error { background: var(--error); color: var(--text); }
 .modal-content { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
 .modal-content p { color: var(--muted); }
 .modal-backdrop.show { opacity: 0.7; }

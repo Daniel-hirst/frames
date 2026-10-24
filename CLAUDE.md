@@ -176,6 +176,7 @@ Dark, snooker-baize green. Chalk-white text. Yellow for Dan, light blue for Damo
 | Dan | `#F2C94C` | yellow |
 | Damon | `#8EC5FF` | light blue |
 | Red ball | `#E0533D` | logo, intro |
+| Error | `#B33A28` | error toast (white text 5.2:1; the red ball is only 3.4:1) |
 | Primary button | `#F4F1E8` on `#0E2F25` text | Confirm, Save |
 
 Type: Barlow Condensed 700 for big numbers, titles and the wordmark (titles 36 px, score 64 px, stat numbers 22 to 64 px); Barlow 400 to 600 for everything else (body 14 to 16 px, labels 12 to 13 px). Small uppercase labels use 0.12em letter spacing.

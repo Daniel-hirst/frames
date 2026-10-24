@@ -137,8 +137,15 @@
     }
   }
 
-  function refreshAll() {
+  function applyNames() {
     $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });
+    $('.step-btn').each(function () {
+      $(this).attr('aria-label', (this.dataset.d < 0 ? 'Lower ' : 'Raise ') + nameOf(Number(this.dataset.p)) + '’s best break');
+    });
+  }
+
+  function refreshAll() {
+    applyNames();
     renderSession();
     renderData();
   }
@@ -733,7 +740,7 @@
     $('body').toggleClass('readonly', !isLogger);
     localStorage.removeItem('frames.localData');   // practice copy from before GitHub saving existed
     loadDraft();
-    $('[data-name]').each(function () { $(this).text(nameOf(Number(this.dataset.name))); });
+    applyNames();
     bindSession();
     bindHistory();
     bindSettings();
