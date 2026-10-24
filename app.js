@@ -692,14 +692,6 @@
     $('#retry-load').on('click', () => loadData().then(refreshAll));
   }
 
-  /* ---------- home-screen app ---------- */
-
-  // Temporary: measurements shown at the bottom of Settings while the home-screen tab bar fix is confirmed.
-  function showScreenInfo() {
-    const bar = document.querySelector('.tabbar').getBoundingClientRect();
-    $('#screen-info').text('Screen ' + screen.height + ' · page ' + window.innerHeight + ' · bar bottom ' + Math.round(bar.bottom) +
-      (navigator.standalone ? ' · home screen' : ''));
-  }
 
   /* ---------- routing ---------- */
 
@@ -733,7 +725,7 @@
     $('#settings-btn').toggleClass('d-none', onSettings);
     $('#close-btn').toggleClass('d-none', !onSettings).attr('href', '#' + lastTab);
     if (name === 'charts') renderCharts();
-    if (name === 'settings') { renderSettings(); showScreenInfo(); }
+    if (name === 'settings') renderSettings();
     window.scrollTo(0, 0);
   }
 
