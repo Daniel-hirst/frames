@@ -99,9 +99,9 @@ Toggle: All time / Last 10 sessions. Everything below recalculates for the chose
 - Streaks per player: current win streak and longest win streak.
 - Breaks table: highest break, 30+ breaks, 20+ breaks, average best break per frame.
 - Average frames per session.
-- Points: total frame points each in the head-to-head card, and points per frame.
+- Totals card under head to head: frames won, points and points per frame each, then total frames played and total points scored (both players together).
 - Records: per player, highest break, highest frame score, biggest frame win, best night, longest win streak, each with the date it was set. Tapping one opens that night in History.
-- Closest frame (smallest winning margin), tappable.
+- Closest frame (smallest winning margin), tappable. Hidden until there are two scored frames.
 
 ### Charts
 

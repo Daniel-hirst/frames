@@ -584,12 +584,14 @@
         '<div class="h2h-nums big-num"><span>' + pa.won + '</span><span>' + pb.won + '</span></div>' +
         '<div class="split-bar" aria-hidden="true"><div class="p0" style="flex:' + (pa.won || 0.0001) + '"></div><div class="p1" style="flex:' + (pb.won || 0.0001) + '"></div></div>' +
         '<div class="h2h-pct"><span>' + pct(pa) + ' win rate</span><span>' + pct(pb) + ' win rate</span></div>' +
-        (pts.frames
-          ? '<div class="h2h-points">' +
-              '<div class="h2h-points-row"><span class="big-num">' + num(ta.total) + '</span><span class="h2h-points-label">Points</span><span class="big-num">' + num(tb.total) + '</span></div>' +
-              '<div class="h2h-pct"><span>' + ta.avgPerFrame.toFixed(1) + ' per frame</span><span>' + tb.avgPerFrame.toFixed(1) + ' per frame</span></div>' +
-            '</div>'
-          : '') +
+      '</div>' +
+      '<div class="card-f stats-table">' +
+        '<div class="tr"><span>Totals</span><span class="p0">' + n0 + '</span><span class="p1">' + n1 + '</span></div>' +
+        row('Frames won', pa.won, pb.won) +
+        row('Points', num(ta.total), num(tb.total)) +
+        row('Points per frame', ta.avgPerFrame.toFixed(1), tb.avgPerFrame.toFixed(1)) +
+        '<div class="tr tr-total"><span class="td-label">Total frames played</span><span class="big-num">' + num(r.frames) + '</span></div>' +
+        '<div class="tr tr-total"><span class="td-label">Total points scored</span><span class="big-num">' + num(ta.total + tb.total) + '</span></div>' +
       '</div>' +
       '<div class="two-col">' + streakCard(pa, 0) + streakCard(pb, 1) + '</div>' +
       '<div class="card-f stats-table">' +
@@ -601,7 +603,7 @@
       '</div>' +
       recordsCard(rec) +
       '<div class="stat-line">Average frames per session <span class="big-num">' + r.avgFramesPerSession.toFixed(1) + '</span></div>' +
-      (pts.closest
+      (pts.closest && pts.frames > 1   // with one frame, "closest" is just that frame
         ? '<button type="button" class="stat-line stat-link" data-session="' + esc(pts.closest.sessionId) + '">' +
             '<span>Closest frame<span class="stat-date">' + shortDate(pts.closest.date) + ', frame ' + pts.closest.frame + '</span></span>' +
             '<span class="big-num">' + pts.closest.score[ids()[0]] + '–' + pts.closest.score[ids()[1]] + '</span></button>'
