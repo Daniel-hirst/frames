@@ -9,5 +9,67 @@
       "name": "Damon"
     }
   ],
-  "sessions": []
+  "sessions": [
+    {
+      "date": "2026-11-13",
+      "frames": [
+        {
+          "winner": "damon",
+          "score": {
+            "dan": 27,
+            "damon": 48
+          },
+          "breaks": {
+            "dan": 5,
+            "damon": 8
+          }
+        },
+        {
+          "winner": "dan",
+          "score": {
+            "dan": 42,
+            "damon": 24
+          },
+          "breaks": {
+            "dan": 9,
+            "damon": 7
+          }
+        },
+        {
+          "winner": "damon",
+          "score": {
+            "dan": 30,
+            "damon": 88
+          },
+          "breaks": {
+            "dan": 3,
+            "damon": 14
+          }
+        },
+        {
+          "winner": "dan",
+          "score": {
+            "dan": 54,
+            "damon": 45
+          },
+          "breaks": {
+            "dan": 9,
+            "damon": 7
+          }
+        },
+        {
+          "winner": "damon",
+          "score": {
+            "dan": 43,
+            "damon": 54
+          },
+          "breaks": {
+            "dan": 6,
+            "damon": 16
+          }
+        }
+      ],
+      "id": "2026-11-13"
+    }
+  ]
 }
