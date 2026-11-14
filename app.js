@@ -30,7 +30,7 @@
 
   const SCREENS = {
     session:  { eyebrow: () => 'Session', title: () => (draft.editingId ? 'Edit session' : 'New session') },
-    stats:    { eyebrow: () => (statsRange === 'all' ? 'All time' : 'Last 10 sessions'), title: () => 'Stats' },
+    stats:    { eyebrow: () => ({ all: 'All time', year: thisYear(), last10: 'Last 10 sessions' }[statsRange]), title: () => 'Stats' },
     charts:   { eyebrow: () => 'All time', title: () => 'Charts' },
     history:  { eyebrow: () => plural(data.sessions.length, 'session'), title: () => 'History' },
     settings: { eyebrow: () => (isLogger ? 'Only you see this' : 'Set up saving'), title: () => 'Settings' }
@@ -63,6 +63,8 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
+  const thisYear = () => today().slice(0, 4);
+
   function readJSON(key) {
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
@@ -75,7 +77,7 @@
     $('#toast-action').prop('hidden', !action).text(action ? action.label : '').off('click')
       .on('click', () => { $('#toast').removeClass('show'); action.fn(); });
     $('#toast').toggleClass('error', !!isError).addClass('show');
-    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 9000 : action ? 6000 : 2500);
+    toastTimer = setTimeout(() => $('#toast').removeClass('show'), isError ? 9000 : action || msg.length > 60 ? 6000 : 2500);
   }
 
   // Bootstrap modal in place of window.confirm. Resolves true on OK.
@@ -97,6 +99,17 @@
       ? '<div class="card-f empty">No sessions yet. Log your first night on the <a href="#session">Session tab</a>.</div>'
       : '<div class="card-f empty">Nothing logged yet.</div>';
   }
+
+  // "Dan: highest break 41" for each record a session broke. `set` is Stats.recordsSet(...).
+  const RECORD_TEXT = {
+    highestBreak: (r) => 'highest break ' + r.value,
+    highestScore: (r) => 'highest frame score ' + r.value,
+    biggestWin: (r) => 'biggest frame win +' + r.value,
+    bestNight: (r) => 'best night ' + r.won + '–' + r.lost,
+    longestStreak: (r) => 'longest win streak ' + r.value
+  };
+  const recordLines = (set, sessionId) =>
+    (set[sessionId] || []).map((r) => nameOf(indexOf(r.player)) + ': ' + RECORD_TEXT[r.key](r.record));
 
   function frameRow(f, n, tag) {
     const w = indexOf(f.winner);
@@ -174,14 +187,15 @@
     return { editingId: null, date: today(), frames: [], form: blankForm() };
   }
   function blankForm() {
-    return { scores: ['', ''], breaks: [0, 0], editIndex: null };
+    // pad: the break being tapped in. `base` is that player's best break before it started.
+    return { scores: ['', ''], breaks: [0, 0], editIndex: null, pad: { who: 0, trail: [], base: 0 } };
   }
   const hasDraft = () => draft.frames.length > 0 || !!draft.editingId;
 
   function loadDraft() {
     const d = readJSON(DRAFT_KEY);
     draft = d && (d.frames.length || d.editingId) ? d : newDraft();
-    if (!draft.form.scores) draft.form = blankForm();   // draft saved before frame scores existed
+    if (!draft.form.scores || !draft.form.pad) draft.form = Object.assign(blankForm(), draft.form.scores ? draft.form : {});   // draft from an older version
   }
 
   function saveDraft() {
@@ -219,6 +233,13 @@
     $('.break-input').each(function () {
       if (document.activeElement !== this) this.value = form.breaks[this.dataset.p];
     });
+    const pad = form.pad;
+    $('.who-btn').each(function () { $(this).attr('aria-pressed', String(Number(this.dataset.p) === pad.who)); });
+    $('#pad-total').text(padTotal()).attr('class', 'big-num p' + pad.who);
+    $('#pad-trail').html(pad.trail.length
+      ? pad.trail.map((v) => '<i class="ball-' + v + '">' + v + '</i>').join('')
+      : 'Tap balls as ' + esc(nameOf(pad.who)) + ' pots them');
+    $('#pad-end, #pad-undo').prop('disabled', !pad.trail.length);
     $('#add-frame').text(editing ? 'Save frame' : 'Add frame');
     $('#edit-actions').prop('hidden', !editing);
     updateFormState();
@@ -252,6 +273,17 @@
     });
   }
 
+  /* Break pad: tap each ball of a break; the running total lifts that player's best break when it beats it. */
+  const padTotal = () => draft.form.pad.trail.reduce((t, v) => t + v, 0);
+  function padEnd() {
+    draft.form.pad.trail = [];
+  }
+  function padApply() {
+    const pad = draft.form.pad;
+    draft.form.breaks[pad.who] = clampBreak(Math.max(pad.base, padTotal()));
+    changed();
+  }
+
   function clampBreak(v) {
     const n = parseInt(String(v).replace(/\D/g, ''), 10);
     return isNaN(n) ? 0 : Math.min(MAX_BREAK, Math.max(0, n));
@@ -277,7 +309,23 @@
       .on('blur', function () { this.value = draft.form.scores[this.dataset.p]; })
       .on('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
 
+    $('.ball-btn').on('click', function () {
+      const pad = draft.form.pad;
+      if (!pad.trail.length) pad.base = draft.form.breaks[pad.who];
+      pad.trail.push(Number(this.dataset.v));
+      padApply();
+    });
+    $('#pad-undo').on('click', function () { draft.form.pad.trail.pop(); padApply(); });
+    $('#pad-end').on('click', function () { padEnd(); changed(); });
+    $('.who-btn').on('click', function () {
+      padEnd();
+      draft.form.pad.who = Number(this.dataset.p);
+      changed();
+    });
+
+    // Setting a break by hand ends any break being tapped in.
     $('.step-btn').on('click', function () {
+      padEnd();
       const p = this.dataset.p;
       draft.form.breaks[p] = clampBreak(draft.form.breaks[p] + Number(this.dataset.d));
       changed();
@@ -289,9 +337,9 @@
         const digits = this.value.replace(/\D/g, '');
         if (digits !== this.value) this.value = digits;
         if (Number(digits) > MAX_BREAK) this.value = MAX_BREAK;
+        padEnd();
         draft.form.breaks[this.dataset.p] = clampBreak(this.value);
-        saveDraft();
-        updateFormState();
+        changed();
       })
       .on('blur', function () { this.value = draft.form.breaks[this.dataset.p]; })
       .on('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
@@ -324,7 +372,7 @@
       const f = draft.frames[i];
       const [a, b] = ids();
       const scores = f.score ? [f.score[a], f.score[b]] : ['', ''];
-      draft.form = { scores, breaks: [f.breaks[a] || 0, f.breaks[b] || 0], editIndex: i };
+      draft.form = Object.assign(blankForm(), { scores, breaks: [f.breaks[a] || 0, f.breaks[b] || 0], editIndex: i });
       changed();
       document.getElementById('frame-form').scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
     });
@@ -381,7 +429,8 @@
       saving = false;
       renderSession();
     }
-    toast((editing ? 'Session updated: ' : 'Session saved: ') + scoreLine(saved));
+    const broke = recordLines(Stats.recordsSet(data.sessions, ids()), saved.id);
+    toast((editing ? 'Session updated: ' : 'Session saved: ') + scoreLine(saved) + (broke.length ? '. New record: ' + broke.join('; ') : ''));
     draft = newDraft();
     saveDraft();
     renderSession();
@@ -398,7 +447,9 @@
     const [a, b] = ids();
     let html = '';
     let month = null;
+    const set = Stats.recordsSet(data.sessions, ids());
     for (const s of Stats.sortSessions(data.sessions).reverse()) {
+      const broke = recordLines(set, s.id);
       const m = s.date.slice(0, 7);
       if (m !== month) {
         month = m;
@@ -409,7 +460,8 @@
       html += '<div class="card-f hist-card" data-id="' + esc(s.id) + '">' +
         '<button type="button" class="hist-row" aria-expanded="' + open + '">' +
           '<span class="hist-main"><span class="hist-date d-block">' + shortDate(s.date) + '</span>' +
-          '<span class="hist-sub d-block">Best break: ' + esc(nameOf(0)) + ' ' + Stats.sessionBestBreak(s, a) + ' · ' + esc(nameOf(1)) + ' ' + Stats.sessionBestBreak(s, b) + '</span></span>' +
+          '<span class="hist-sub d-block">Best break: ' + esc(nameOf(0)) + ' ' + Stats.sessionBestBreak(s, a) + ' · ' + esc(nameOf(1)) + ' ' + Stats.sessionBestBreak(s, b) +
+            (broke.length ? ' · <i class="bi bi-trophy" role="img" aria-label="New record"></i>' : '') + '</span></span>' +
           '<span class="hist-score big-num" aria-label="' + esc(nameOf(0) + ' ' + sa + ', ' + nameOf(1) + ' ' + sb) + '">' +
             '<span class="p0">' + sa + '</span> – <span class="p1">' + sb + '</span></span>' +
           '<i class="bi bi-chevron-' + (open ? 'up' : 'down') + '" aria-hidden="true"></i>' +
@@ -417,6 +469,10 @@
         (open
           ? '<div class="hist-frames">' + s.frames.map((f, i) => frameRow(f, i + 1, 'div')).join('') +
             nightPoints(s) +
+            (broke.length
+              ? '<div class="hist-records"><span class="hist-points-label">New ' + (broke.length === 1 ? 'record' : 'records') + '</span>' +
+                '<ul>' + broke.map((l) => '<li>' + esc(l) + '</li>').join('') + '</ul></div>'
+              : '') +
             '<div class="hist-share"><button type="button" class="btn-f btn-raised" data-action="share">' +
               '<i class="bi bi-box-arrow-up" aria-hidden="true"></i> Share this night</button></div>' +
             '<div class="two-col hist-actions logger-only">' +
@@ -427,7 +483,7 @@
         '</div>';
     }
     $('#history-body').html(html);
-    for (const s of data.sessions) if (expanded.has(s.id)) shareImage(s).catch(() => {});
+    for (const s of data.sessions) if (expanded.has(s.id)) shareImage(s).catch(() => {});   // drawn ahead, see shareImage
   }
 
   // Points for the night, both players. Nothing for nights logged before frame scores existed.
@@ -515,12 +571,14 @@
   // iOS refuses navigator.share if too much time has passed since the tap.
   const shareImages = new Map();   // session JSON + names -> Promise<Blob>
   function shareImage(s) {
-    const key = JSON.stringify([s, data.players]);
+    const records = recordLines(Stats.recordsSet(data.sessions, ids()), s.id);
+    const key = JSON.stringify([s, data.players, records]);
     if (!shareImages.has(key)) {
       const [a, b] = ids();
       const css = getComputedStyle(document.documentElement);
       shareImages.set(key, ShareCard.render({
         date: longDate(s.date),
+        records,
         names: [nameOf(0), nameOf(1)],
         colours: [css.getPropertyValue('--dan').trim(), css.getPropertyValue('--damon').trim()],
         score: [Stats.sessionScore(s, a), Stats.sessionScore(s, b)],
@@ -570,8 +628,11 @@
     if (!data.sessions.length) { $('#stats-body').html(emptyState()); $('.segmented').prop('hidden', true); return; }
     $('.segmented').prop('hidden', false);
     $('.seg-btn').each(function () { $(this).attr('aria-pressed', String(this.dataset.range === statsRange)); });
+    $('.seg-btn[data-range="year"]').text(thisYear());
 
-    const opts = statsRange === 'last10' ? { last: 10 } : null;
+    const opts = { all: null, year: { year: thisYear() }, last10: { last: 10 } }[statsRange];
+    const nights = Stats.nights(data.sessions, ids(), opts);
+    const [na, nb] = ids().map((id) => nights.players[id]);
     const r = Stats.summary(data.sessions, ids(), opts);
     const pts = Stats.points(data.sessions, ids(), opts);
     const rec = Stats.records(data.sessions, ids(), opts);
@@ -584,7 +645,17 @@
     const streakCard = (p, i) =>
       '<div class="card-f mb-0"><div class="card-title p' + i + '">' + esc(nameOf(i)) + '</div>' +
       '<div class="streak-row">Current streak <span class="big-num">' + p.currentStreak + '</span></div>' +
-      '<div class="streak-row">Longest streak <span class="big-num">' + p.longestStreak + '</span></div></div>';
+      '<div class="streak-row">Longest streak <span class="big-num">' + p.longestStreak + '</span></div>' +
+      formRow([na, nb][i].form) + '</div>';
+
+    // Last five nights, oldest first. The letters carry the result; the filled chip only echoes "W".
+    const WORD = { W: 'won', L: 'lost', D: 'drawn' };
+    function formRow(form) {
+      if (!form.length) return '';
+      return '<div class="form-label">Last ' + (form.length === 1 ? 'night' : form.length + ' nights') + '</div>' +
+        '<div class="form-row" role="img" aria-label="' + form.map((r) => WORD[r]).join(', ') + '">' +
+        form.map((r) => '<span' + (r === 'W' ? ' class="w"' : '') + '>' + r + '</span>').join('') + '</div>';
+    }
 
     const row = (label, x, y) =>
       '<div class="tr"><span class="td-label">' + label + '</span><span class="big-num">' + x + '</span><span class="big-num">' + y + '</span></div>';
@@ -596,6 +667,10 @@
         '<div class="h2h-nums big-num"><span>' + pa.won + '</span><span>' + pb.won + '</span></div>' +
         '<div class="split-bar" aria-hidden="true"><div class="p0" style="flex:' + (pa.won || 0.0001) + '"></div><div class="p1" style="flex:' + (pb.won || 0.0001) + '"></div></div>' +
         '<div class="h2h-pct"><span>' + pct(pa) + ' win rate</span><span>' + pct(pb) + ' win rate</span></div>' +
+        '<div class="nights-row" aria-label="' + esc('Nights won: ' + nameOf(0) + ' ' + na.won + ', ' + nameOf(1) + ' ' + nb.won + ', drawn ' + nights.drawn) + '">' +
+          '<span class="big-num p0">' + na.won + '</span>' +
+          '<span class="nights-mid">nights won' + (nights.drawn ? '<br>' + nights.drawn + ' drawn' : '') + '</span>' +
+          '<span class="big-num p1">' + nb.won + '</span></div>' +
       '</div>' +
       '<div class="card-f stats-table">' +
         '<div class="tr"><span>Totals</span><span class="p0">' + n0 + '</span><span class="p1">' + n1 + '</span></div>' +
@@ -664,7 +739,9 @@
     const sorted = Stats.sortSessions(data.sessions);
     const number = Object.fromEntries(sorted.map((s, i) => [s.id, i + 1]));
     const rolling = Stats.rollingAvgBreak(sorted, ids(), 5);
-    const cumulative = Stats.cumulativeWins(sorted, ids());
+    const [pa, pb] = ids();
+    const lead = Stats.cumulativeWins(sorted, ids()).map((r) => ({ id: r.id, lead: r[pa] - r[pb] }));   // above 0 = player 1 ahead
+    const leadText = (v) => (v === 0 ? 'Level' : nameOf(v > 0 ? 0 : 1) + ' leads by ' + plural(Math.abs(v), 'frame'));
     const best = Stats.sessionBestBreaks(sorted, ids(), 8);
     const lastOf = (rows, id) => rows[rows.length - 1][id];
     const legend = (vals) => '<div class="legend">' + [0, 1].map((i) =>
@@ -675,7 +752,7 @@
 
     $('#charts-body').html(
       card('Average break', 'last 5 sessions', ids().map((id) => lastOf(rolling, id).toFixed(1)), 'chart-rolling') +
-      card('Running frames total', 'all sessions', ids().map((id) => lastOf(cumulative, id)), 'chart-cumulative') +
+      card('Who’s ahead', esc(leadText(lead[lead.length - 1].lead)), ['above the line', 'below it'], 'chart-lead') +
       card('Best break per session', 'last 8 sessions', null, 'chart-best')
     );
 
@@ -736,7 +813,42 @@
     };
 
     charts.push(lineChart('chart-rolling', rolling));
-    charts.push(lineChart('chart-cumulative', cumulative));
+
+    // One line: frames ahead. Player 1's colour above zero, player 2's below; the tooltip names who leads.
+    const leadLabels = lead.map((r) => 'Session ' + number[r.id]);
+    const leadMax = Math.max(2, ...lead.map((r) => Math.abs(r.lead))) + 1;   // one frame of headroom so the line never touches the edge
+    const leadOptions = options(leadLabels);
+    leadOptions.scales.y = Object.assign({}, leadOptions.scales.y, {
+      min: -leadMax, max: leadMax,
+      ticks: Object.assign({}, leadOptions.scales.y.ticks, { callback: (v) => Math.abs(v) })
+    });
+    leadOptions.plugins.tooltip = Object.assign({}, leadOptions.plugins.tooltip, {
+      displayColors: false,
+      callbacks: { label: (ctx) => leadText(ctx.parsed.y) }
+    });
+    const side = (y) => colours[y >= 0 ? 0 : 1];
+    charts.push(new Chart(document.getElementById('chart-lead'), {
+      type: 'line',
+      data: {
+        labels: leadLabels,
+        datasets: [{
+          label: 'Frames ahead',
+          data: lead.map((r) => r.lead),
+          borderWidth: 2,
+          borderColor: side(lead[lead.length - 1].lead),
+          segment: { borderColor: (ctx) => side(ctx.p0.parsed.y + ctx.p1.parsed.y) },
+          fill: { target: 'origin', above: colours[0] + '40', below: colours[1] + '40' },
+          cubicInterpolationMode: 'monotone',
+          pointRadius: (ctx) => (ctx.dataIndex === lead.length - 1 ? 4 : 0),
+          pointBackgroundColor: (ctx) => side(ctx.parsed ? ctx.parsed.y : 0),
+          pointHoverRadius: 5,
+          pointBorderColor: cardBg,
+          pointBorderWidth: 2,
+          pointHitRadius: 12
+        }]
+      },
+      options: leadOptions
+    }));
 
     const bestLabels = best.map((r) => 'Session ' + number[r.id]);
     charts.push(new Chart(document.getElementById('chart-best'), {

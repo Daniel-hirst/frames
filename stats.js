@@ -48,7 +48,12 @@
     };
   }
 
-  const rangeOf = (sessions, opts) => (opts && opts.last ? lastSessions(sessions, opts.last) : sortSessions(sessions));
+  // { last: 10 } = the 10 most recent sessions; { year: '2026' } = that calendar year; nothing = all time.
+  function rangeOf(sessions, opts) {
+    if (opts && opts.last) return lastSessions(sessions, opts.last);
+    const sorted = sortSessions(sessions);
+    return opts && opts.year ? sorted.filter((s) => s.date.slice(0, 4) === String(opts.year)) : sorted;
+  }
 
   // Everything on the Stats screen. Pass { last: 10 } for the "Last 10 sessions" range.
   function summary(sessions, playerIds, opts) {
@@ -174,6 +179,42 @@
     return out;
   }
 
+  // Nights (sessions) won each, drawn nights, and each player's last five results, oldest first: 'W', 'L' or 'D'.
+  function nights(sessions, playerIds, opts) {
+    const [a, b] = playerIds;
+    const results = rangeOf(sessions, opts).map((s) => Math.sign(sessionScore(s, a) - sessionScore(s, b)));   // 1 = a won
+    const letters = (sign) => results.slice(-5).map((r) => (r === 0 ? 'D' : r === sign ? 'W' : 'L'));
+    return {
+      drawn: results.filter((r) => r === 0).length,
+      players: {
+        [a]: { won: results.filter((r) => r === 1).length, form: letters(1) },
+        [b]: { won: results.filter((r) => r === -1).length, form: letters(-1) }
+      }
+    };
+  }
+
+  // Which records each session broke when it was played: { sessionId: [{ player, key, record }] }.
+  // Only a record that beat an earlier one counts, so a player's first break or first win is not announced.
+  // ponytail: recalculates the records after every session (n squared); keep running records if this ever feels slow.
+  const RECORD_KEYS = ['highestBreak', 'highestScore', 'biggestWin', 'bestNight', 'longestStreak'];
+  const recordRank = (key, r) => (key === 'bestNight' ? (r.won - r.lost) * 1000 + r.won : r.value);
+  function recordsSet(sessions, playerIds) {
+    const sorted = sortSessions(sessions);
+    const out = {};
+    let before = records([], playerIds);
+    sorted.forEach((s, i) => {
+      const after = records(sorted.slice(0, i + 1), playerIds);
+      for (const id of playerIds) {
+        for (const key of RECORD_KEYS) {
+          const was = before[id][key], now = after[id][key];
+          if (was && recordRank(key, now) > recordRank(key, was)) (out[s.id] = out[s.id] || []).push({ player: id, key, record: now });
+        }
+      }
+      before = after;
+    });
+    return out;
+  }
+
   // Put a deleted session back. Keeps its id unless that id has been reused since, then it gets a fresh one.
   function restoreSession(data, session) {
     if (!data.sessions.some((s) => s.id === session.id)) {
@@ -216,7 +257,7 @@
     sortSessions, lastSessions, allFrames, summary,
     sessionScore, sessionBestBreak,
     rollingAvgBreak, cumulativeWins, sessionBestBreaks,
-    points, records,
+    points, records, nights, recordsSet,
     winnerFromScore, nextSessionId, upsertSession, removeSession, restoreSession
   };
 

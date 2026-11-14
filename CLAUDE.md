@@ -82,7 +82,8 @@ Mobile first, 390 px wide is the target. Bottom tab bar with four tabs: Session,
 3. "Frames so far" list: frame number, winner dot and name, the frame score (big, e.g. `72 – 35`) with the two best breaks small underneath.
 4. "Add frame N" card: a frame score box for each player (the higher score wins; the leading box takes that player's colour), a best-break control for each player, "Add frame". Add frame stays disabled until both scores are in, they aren't level, and no break is above its player's score; a hint line says why.
    - Break control: minus and plus buttons plus the number itself is tappable to type (`inputmode="numeric"`, 0 to 147). Typing is the fast path for a break like 34.
-   - After "Add frame": clear both scores, reset both breaks to 0, scroll the new frame into view.
+   - Break pad (optional, under the break controls): pick whose break it is, then tap a ball button (1 to 7) for each pot. It shows the balls so far and the running total, and lifts that player's best break whenever the running break beats it. "End break", switching player, or setting a break by hand clears the pad and keeps the best break. "Undo ball" removes the last tap. It only adds up points: no rules, no frame score. The pad state lives in the draft form and is never written to `data.json`.
+   - After "Add frame": clear both scores, reset both breaks to 0, clear the pad, scroll the new frame into view.
    - Tap a frame in the list to edit or remove it.
 5. "Confirm session (N frames)": the main button. Disabled with no frames. Confirming writes to GitHub (see below), clears the draft, goes to History.
 6. "Discard draft": asks for confirmation.
@@ -93,10 +94,10 @@ Only one draft at a time. Starting to edit a past session while a draft exists a
 
 ### Stats
 
-Toggle: All time / Last 10 sessions. Everything below recalculates for the chosen range.
+Toggle: All time / this year (the button shows the year, e.g. 2026) / Last 10. Everything below recalculates for the chosen range.
 
-- Head to head: frames won each (big), split bar, win % each, "N sessions · N frames".
-- Streaks per player: current win streak and longest win streak.
+- Head to head: frames won each (big), split bar, win % each, "N sessions · N frames", then nights won each with drawn nights between them.
+- Streaks per player: current win streak and longest win streak, then the last five nights as W / L / D chips, oldest first (the letter carries the result, not the colour).
 - Breaks table: highest break, 30+ breaks, 20+ breaks, average best break per frame.
 - Average frames per session.
 - Totals card under head to head: frames won, points and points per frame each, then total frames played and total points scored (both players together).
@@ -107,12 +108,12 @@ Toggle: All time / Last 10 sessions. Everything below recalculates for the chose
 All three are Chart.js, styled to match (no gridline clutter, two series colours, rounded bars):
 
 1. Average break (rolling average best break, last 5 sessions), both players. Line chart.
-2. Running frames total (cumulative frames won over sessions), both players. Line chart.
+2. Who's ahead (the frame lead after each session: player 1's cumulative frames minus player 2's). One line around zero, player 1's colour above, player 2's below; the card says who leads and by how many.
 3. Best break per session, last 8 sessions, grouped bars.
 
 ### History
 
-Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames, then the night's points (both players, only when the frames have scores). Expanded rows show the frames the same way as the Session list. Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit). The "Session deleted" toast offers **Undo**, which commits `Restore session ...` (same id unless it was reused meanwhile).
+Sessions newest first, grouped by month. Each row: date, best break each, final score (winner coloured, tied is fine). Tap to expand and show the frames, then the night's points (both players, only when the frames have scores). Expanded rows show the frames the same way as the Session list. A night that broke a record shows a trophy on its row and a "New records" list when expanded (also in the save toast and on the share picture). Expanded view has **Edit session** (loads it into the Session tab as an editable draft, confirming replaces it by `id`) and **Delete** (confirm dialog, then commit). The "Session deleted" toast offers **Undo**, which commits `Restore session ...` (same id unless it was reused meanwhile).
 
 **Share this night** (both modes): draws a 1080-wide PNG of the night in the app's style (`share.js`), with the night's points under the score, and opens the share sheet, or downloads it where there is no share sheet. The picture is drawn when the row is expanded, because iOS refuses `navigator.share` if too long passes after the tap.
 
@@ -137,9 +138,12 @@ Treat all frames in order: sort sessions by date, then frames in played order.
 - **Average frames per session**: total frames / sessions. One decimal place.
 - **Session best break** (chart 3): max of `breaks[player]` across the session's frames.
 - **Rolling average best break** (chart 1): for each session, a player's mean best break per frame in that session; the rolling value is the mean of those over the last 5 sessions up to and including this one (fewer at the start).
-- **Cumulative frames won** (chart 2): running total per player after each session.
+- **Cumulative frames won** (chart 2 plots the difference): running total per player after each session.
 - **Points**: per player, sum of `score[player]` over frames that have a `score` (older frames without one are skipped); points per frame = total / scored frames, one decimal place.
 - **Records**: highest break, highest frame score, biggest frame win (winning margin), best night (session won by the biggest frame margin, then most frames won), longest win streak (with the sessions it started and ended in). Each carries its session and date. A record equalled later stays with the first time it was set. `null` when there is none (no break, no frame won).
+- **Nights**: a session is won by whoever won more of its frames, drawn if level. Nights won per player, drawn count, and each player's last five results in the range.
+- **Records broken** (`recordsSet`): for each session, the records it beat when it was played, in date order. A first record (nothing to beat) is not announced. All five records count.
+- **Year** filter: only sessions dated in that calendar year.
 - **Last 10 sessions** filter: take the 10 most recent sessions and run every rule above on them only. Streaks inside the filtered range only.
 
 ## Saving to GitHub
@@ -245,4 +249,4 @@ Each fade goes fully out to plain green before the next screen fades in. Do not 
 
 ## Not in scope
 
-No ball-by-ball live scoring (there is a physical scoreboard at the table), no handicaps, no drill log, no session notes, no accounts. Do not add any of these.
+No ball-by-ball live scoring (there is a physical scoreboard at the table; the break pad only adds up one break), no handicaps, no drill log, no session notes, no accounts. Do not add any of these.

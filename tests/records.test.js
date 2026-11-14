@@ -96,3 +96,15 @@ test('restoreSession: if the id was reused meanwhile, it comes back with a fresh
   assert.deepEqual(back.sessions.filter((s) => s.date === '2026-10-03').map((s) => [s.id, s.frames.length]),
     [['2026-10-03', 0], ['2026-10-03-2', 2]]);
 });
+
+test('recordsSet: which records each night broke; first-ever records are not announced', () => {
+  const set = Stats.recordsSet(S, ids);
+  const keys = (id, player) => (set[id] || []).filter((r) => r.player === player).map((r) => r.key);
+  assert.equal(set['2026-09-26'], undefined);
+  assert.deepEqual(keys('2026-10-03', 'dan'), ['highestBreak', 'highestScore', 'biggestWin', 'bestNight', 'longestStreak']);
+  assert.deepEqual(keys('2026-10-03', 'damon'), []);
+  assert.deepEqual(keys('2026-10-10', 'dan'), []);
+  // Damon had never won a night before 10 Oct, so his best night is a first, not a broken record.
+  assert.deepEqual(keys('2026-10-10', 'damon'), ['highestBreak', 'highestScore', 'biggestWin', 'longestStreak']);
+  assert.deepEqual(set['2026-10-17'], [{ player: 'dan', key: 'highestBreak', record: { sessionId: '2026-10-17', date: '2026-10-17', value: 50 } }]);
+});
