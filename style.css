@@ -223,6 +223,32 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 .break-input:focus { background: var(--bg); outline: none; }
 
+/* Break pad */
+.pad { margin: 4px 0 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.pad-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pad-head .field-label { margin: 0; }
+.who-seg { display: flex; gap: 4px; padding: 3px; border-radius: 12px; background: var(--bg); }
+.who-btn { min-height: 44px; min-width: 72px; padding: 0 12px; border: 0; border-radius: 9px; background: none; color: var(--muted); font-weight: 600; font-size: 15px; }
+.who-btn[aria-pressed="true"] { color: var(--bg); }
+.who-btn[aria-pressed="true"][data-p="0"] { background: var(--dan); }
+.who-btn[aria-pressed="true"][data-p="1"] { background: var(--damon); }
+.pad-run { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 52px; }
+.pad-run .big-num { font-size: 40px; flex: none; }
+.pad-trail { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; color: var(--muted); font-size: 13px; }
+.pad-trail i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); font-style: normal; font-weight: 600; font-size: 12px; }
+/* Pulled 6 px into the card padding each side so each ball is about 44 px on a 390 px screen. */
+.pad-balls { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin: 0 -6px 12px; }
+.ball-btn { aspect-ratio: 1; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .25); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 20px; }
+.ball-btn:active { transform: scale(.92); }
+/* Ball colours; the number on each ball is its value, so colour is never the only cue. */
+.ball-1 { background: #E0533D; color: #fff; }
+.ball-2 { background: #F2C94C; color: var(--bg); }
+.ball-3 { background: #2FA866; color: #fff; }
+.ball-4 { background: #8B5A2B; color: #fff; }
+.ball-5 { background: #3F7FD6; color: #fff; }
+.ball-6 { background: #F28BA8; color: var(--bg); }
+.ball-7 { background: #0B0B0B; color: #fff; }
+
 /* Segmented toggle */
 .segmented { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--card); margin-bottom: 12px; }
 .seg-btn { flex: 1; min-height: 44px; border: 0; border-radius: 10px; background: none; color: var(--muted); font-weight: 600; font-size: 15px; }
@@ -235,6 +261,13 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .h2h-names, .h2h-pct { display: flex; justify-content: space-between; font-weight: 600; }
 .h2h-pct { font-weight: 400; color: var(--muted); font-size: 14px; }
 .h2h-nums { display: flex; justify-content: space-between; font-size: 64px; margin: 4px 0 14px; }
+.nights-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.nights-row .big-num { font-size: 30px; }
+.nights-mid { color: var(--muted); font-size: 13px; text-align: center; line-height: 1.3; }
+.form-label { color: var(--muted); font-size: 13px; margin-top: 12px; }
+.form-row { display: flex; gap: 5px; margin-top: 6px; }
+.form-row span { flex: 1; text-align: center; font-weight: 600; font-size: 13px; padding: 5px 0; border-radius: 8px; border: 1px solid var(--line); color: var(--muted); }
+.form-row .w { background: var(--text); color: var(--bg); border-color: var(--text); }
 .split-bar { display: flex; gap: 2px; height: 10px; margin-bottom: 10px; }
 .split-bar div { border-radius: 5px; min-width: 4px; }
 .split-bar .p0 { background: var(--dan); }
@@ -286,6 +319,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .hist-points { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); }
 .hist-points-label { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .hist-points .big-num { font-size: 26px; }
+.hist-records { padding: 10px 16px; border-top: 1px solid var(--line); }
+.hist-records ul { list-style: none; margin: 6px 0 0; padding: 0; }
 .hist-share { padding: 12px 16px 0; }
 .hist-share .btn-f { width: 100%; }
 body.readonly .hist-share { padding-bottom: 16px; }

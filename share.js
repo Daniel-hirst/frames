@@ -45,7 +45,7 @@
     ctx.fillText(s, x, y);
   }
 
-  // night: { date, names:[a,b], colours:[a,b], score:[a,b], best:[a,b], points:[a,b]|null,
+  // night: { date, records:[text], names:[a,b], colours:[a,b], score:[a,b], best:[a,b], points:[a,b]|null,
   //          frames:[{ winner: 0|1, score:[a,b]|null, breaks:[a,b] }] }
   // Resolves to a PNG blob, 1080 wide, at least 1350 tall (4:5), taller for long nights.
   async function render(night) {
@@ -60,7 +60,9 @@
     const ROW = 104;
     const listTop = 760;
     const footTop = listTop + night.frames.length * ROW + 48;
-    const H = Math.max(1350, footTop + 168 + 136);
+    const recs = night.records || [];
+    const recTop = footTop + 168 + (recs.length ? 72 : 0);
+    const H = Math.max(1350, recTop + recs.length * 52 + 136);
 
     const canvas = document.createElement('canvas');
     canvas.width = W;
@@ -134,6 +136,14 @@
       spaced(ctx, 'BEST BREAK', x + 36, footTop + 56, 3);
       text(ctx, night.names[i], x + 36, footTop + 128, '600 40px ' + BODY, night.colours[i]);
       text(ctx, String(night.best[i]), x + boxW - 36, footTop + 136, '700 96px ' + COND, C.text, 'right');
+    }
+
+    // Records this night broke, e.g. "Dan: highest break 41".
+    if (recs.length) {
+      ctx.font = '600 24px ' + BODY;
+      ctx.fillStyle = C.muted;
+      spaced(ctx, recs.length === 1 ? 'NEW RECORD' : 'NEW RECORDS', PAD, recTop - 24, 3);
+      recs.forEach((line, i) => text(ctx, line, PAD, recTop + 28 + i * 52, '500 36px ' + BODY, C.text));
     }
 
     text(ctx, 'Head to head, frame by frame', W / 2, H - 64, '400 28px ' + BODY, C.muted, 'center');

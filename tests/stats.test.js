@@ -192,3 +192,22 @@ test('frames with a score field give the same stats', () => {
   const withScore = S.map((s) => ({ ...s, frames: s.frames.map((f) => ({ ...f, score: { dan: 50, damon: 40 } })) }));
   assert.deepEqual(Stats.summary(withScore, ids), Stats.summary(S, ids));
 });
+
+test('nights won, drawn, and last-five form', () => {
+  const level = { id: '2026-10-17', date: '2026-10-17', frames: [
+    { winner: 'dan', breaks: { dan: 0, damon: 0 } }, { winner: 'damon', breaks: { dan: 0, damon: 0 } }] };
+  const n = Stats.nights(S.concat([level]), ids);
+  assert.equal(n.drawn, 1);
+  assert.deepEqual(n.players.dan, { won: 3, form: ['W', 'W', 'L', 'W', 'D'] });
+  assert.deepEqual(n.players.damon, { won: 1, form: ['L', 'L', 'W', 'L', 'D'] });
+  assert.deepEqual(Stats.nights(S, ids, { last: 2 }).players.damon, { won: 1, form: ['W', 'L'] });
+});
+
+test('year range: only that calendar year', () => {
+  const next = { id: '2027-01-02', date: '2027-01-02', frames: [{ winner: 'damon', breaks: { dan: 0, damon: 25 } }] };
+  const all = S.concat([next]);
+  assert.equal(Stats.summary(all, ids, { year: 2026 }).sessions, 4);
+  const r = Stats.summary(all, ids, { year: '2027' });
+  assert.deepEqual([r.sessions, r.frames, r.players.damon.won], [1, 1, 1]);
+  assert.equal(Stats.summary(all, ids, { year: 2025 }).frames, 0);
+});

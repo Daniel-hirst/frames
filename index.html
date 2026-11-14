@@ -211,6 +211,29 @@
             </div>
           </div>
         </div>
+        <div class="pad">
+          <div class="pad-head">
+            <span class="field-label">Break pad</span>
+            <div class="who-seg" role="group" aria-label="Whose break">
+              <button type="button" class="who-btn" data-p="0" aria-pressed="true"><span data-name="0"></span></button>
+              <button type="button" class="who-btn" data-p="1" aria-pressed="false"><span data-name="1"></span></button>
+            </div>
+          </div>
+          <div class="pad-run"><span class="pad-trail" id="pad-trail"></span><span class="big-num" id="pad-total">0</span></div>
+          <div class="pad-balls">
+            <button type="button" class="ball-btn ball-1" data-v="1" aria-label="Red, 1 point">1</button>
+            <button type="button" class="ball-btn ball-2" data-v="2" aria-label="Yellow, 2 points">2</button>
+            <button type="button" class="ball-btn ball-3" data-v="3" aria-label="Green, 3 points">3</button>
+            <button type="button" class="ball-btn ball-4" data-v="4" aria-label="Brown, 4 points">4</button>
+            <button type="button" class="ball-btn ball-5" data-v="5" aria-label="Blue, 5 points">5</button>
+            <button type="button" class="ball-btn ball-6" data-v="6" aria-label="Pink, 6 points">6</button>
+            <button type="button" class="ball-btn ball-7" data-v="7" aria-label="Black, 7 points">7</button>
+          </div>
+          <div class="two-col">
+            <button type="button" class="btn-f btn-raised" id="pad-end">End break</button>
+            <button type="button" class="btn-f btn-outline" id="pad-undo">Undo ball</button>
+          </div>
+        </div>
         <p class="form-hint" id="form-hint" aria-live="polite"></p>
         <button type="button" class="btn-f btn-raised w-100" id="add-frame" disabled>Add frame</button>
         <div class="two-col mt-12" id="edit-actions" hidden>
@@ -226,7 +249,8 @@
     <section class="screen" id="screen-stats" hidden>
       <div class="segmented" role="group" aria-label="Range">
         <button type="button" class="seg-btn" data-range="all" aria-pressed="true">All time</button>
-        <button type="button" class="seg-btn" data-range="last10" aria-pressed="false">Last 10 sessions</button>
+        <button type="button" class="seg-btn" data-range="year" aria-pressed="false"></button>
+        <button type="button" class="seg-btn" data-range="last10" aria-pressed="false">Last 10</button>
       </div>
       <div id="stats-body"></div>
     </section>
