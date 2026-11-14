@@ -18,6 +18,10 @@
 /* Bootstrap turns on smooth scrolling page-wide; tab switches should jump to the top. */
 :root { scroll-behavior: auto; }
 
+/* Keep the screens still on a phone: no double-tap zoom (pinch still works) and no sideways drag. */
+html { touch-action: manipulation; overflow-x: hidden; overscroll-behavior-x: none; }
+#app { overflow-x: clip; }
+
 html, body {
   background: var(--bg);
   color: var(--text);
@@ -146,6 +150,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   width: calc(100% + 2px); height: calc(100% + 2px);
   opacity: 0;
   cursor: pointer;
+  font-size: 16px;   /* under 16 px, iOS zooms the page in when the field takes focus */
 }
 .draft-label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; }
 

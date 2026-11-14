@@ -316,7 +316,12 @@
       padApply();
     });
     $('#pad-undo').on('click', function () { draft.form.pad.trail.pop(); padApply(); });
-    $('#pad-end').on('click', function () { padEnd(); changed(); });
+    // Ending a break hands the pad to the other player, who is at the table next.
+    $('#pad-end').on('click', function () {
+      padEnd();
+      draft.form.pad.who = 1 - draft.form.pad.who;
+      changed();
+    });
     $('.who-btn').on('click', function () {
       padEnd();
       draft.form.pad.who = Number(this.dataset.p);
